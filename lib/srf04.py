@@ -17,15 +17,18 @@ class SRF04():
         
         GPIO.output(self.TRIG, False)                   #Set TRIG as LOW
 
-        time.sleep(0.001)
+        time.sleep(0.0001)
         
         GPIO.output(self.TRIG, True)                    #Set TRIG as HIGH
         time.sleep(0.00001)                             #Delay of 0.00001 seconds
         GPIO.output(self.TRIG, False)                   #Set TRIG as LOW
 
+        duration = time.time()
+
         while GPIO.input(self.ECHO)==0:                 #Check whether the ECHO is LOW
             pulse_start = time.time()                   #Saves the last known time of LOW pulse
-
+            
+        
         while GPIO.input(self.ECHO)==1:                 #Check whether the ECHO is HIGH
             pulse_end = time.time()                     #Saves the last known time of HIGH pulse
             

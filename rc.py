@@ -17,7 +17,7 @@ robot = Robot()
  
 with picamera.PiCamera() as camera:
     with picamera.array.PiRGBArray(camera) as stream:
-        camera.resolution = (320, 240)
+        camera.resolution = (200, 150)
 
         while True:
             camera.capture(stream, 'bgr', use_video_port=True)
@@ -44,6 +44,8 @@ with picamera.PiCamera() as camera:
                 robot.GetXYZ()
             elif key == ord('t'):
                 robot.IsVictim()
+            elif key == ord('b'):
+                robot.IsVoidTile()
             elif key == ord('y'):
                 robot.GetSonar()
             else:

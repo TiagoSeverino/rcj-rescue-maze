@@ -6,6 +6,7 @@ from lib.srf04 import SRF04
 #from lib.cmps03 import CMPS03
 from lib.mlx90614 import MLX90614
 from lib.hmc5883l import HMC5883L
+from lib.lineSensor import LineSensor
 from lib.kitDropper import KitDropper
 
 class Robot():
@@ -17,6 +18,9 @@ class Robot():
     LeftThermometerAddr = 0x5a
     RightThermometerAddr = 0x2a
 
+    #Line Sensor
+    LineSensorPin = 26
+
     #SRF04
     LeftSonarTRIG = 36
     LeftSonarECHO = 15
@@ -25,13 +29,11 @@ class Robot():
     FrontSonarECHO = 23
     
     RightSonarTRIG = 40
-    RightSonarECHO = 37
+    RightSonarECHO = 32
 
     #Pin1, Pin2
-    Motor1 = [13, 11] #Motor in Top-Left
-    Motor2 = [29, 31] #Motor in Top-Right
-    Motor3 = [19, 21] #Motor in Bottom-Left
-    Motor4 = [35, 33] #Motor in Bottom-Left
+    motorLeft = [37, 35] #Motor in Left
+    motorRight = [33, 31] #Motor in Right
 
     #Vars
     tileSize = 30.0
@@ -42,6 +44,9 @@ class Robot():
         
         GPIO.setmode(GPIO.BOARD)
         #GPIO.setwarnings(False)
+
+        #Line Sensor Setup
+        self.LineSensor = LineSensor(self.LineSensorPin)
 
         #Kit Dropper Setup
         self.kitDropper = KitDropper(self.KitDropperPin)
@@ -59,11 +64,11 @@ class Robot():
         self.sonarRight = SRF04(self.RightSonarTRIG, self.RightSonarECHO)
 
         #Motors Setup
-        self.motor1 = Motor(self.Motor1[0], self.Motor1[1])
-        self.motor2 = Motor(self.Motor2[0], self.Motor2[1])
-        self.motor3 = Motor(self.Motor3[0], self.Motor3[1])
-        self.motor4 = Motor(self.Motor4[0], self.Motor4[1])
+        self.MotorLeft = Motor(self.motorLeft[0], self.motorLeft[1])
+        self.MotorRight = Motor(self.motorRight[0], self.motorRight[1])
 
+    def IsVoidTile(self):
+        print self.LineSensor.IsVoidTile()
 
 
     def GetSonar(self):
@@ -72,6 +77,8 @@ class Robot():
         frontCM = self.sonarFront.getCM()
         
         rightCM = self.sonarRight.getCM()
+
+        print leftCM, frontCM, rightCM
 
         return (leftCM, frontCM, rightCM)
         
@@ -124,43 +131,30 @@ class Robot():
 
 
     def Forward(self):
-        self.motor1.Forward()
-        self.motor2.Forward()
-        self.motor3.Forward()
-        self.motor4.Forward()
+        self.MotorLeft.Forward()
+        self.MotorRight.Forward()
 
     def Backward(self):
-        self.motor1.Backward()
-        self.motor2.Backward()
-        self.motor3.Backward()
-        self.motor4.Backward()
+        self.MotorLeft.Backward()
+        self.MotorRight.Backward()
 
 
     def Left(self):
-        self.motor1.Backward()
-        self.motor2.Forward()
-        self.motor3.Backward()
-        self.motor4.Forward()
-
+        self.MotorLeft.Backward()
+        self.MotorRight.Forward()
 
     def Right(self):
-        self.motor1.Forward()
-        self.motor2.Backward()
-        self.motor3.Forward()
-        self.motor4.Backward()
+        self.MotorLeft.Forward()
+        self.MotorRight.Backward()
 
 
     def Stop(self):
-        self.motor1.Stop()
-        self.motor2.Stop()
-        self.motor3.Stop()
-        self.motor4.Stop()
+        self.MotorLeft.Stop()
+        self.MotorRight.Stop()
 
     def Break(self):
-        self.motor1.Break()
-        self.motor2.Break()
-        self.motor3.Break()
-        self.motor4.Break()
+        self.MotorLeft.Break()
+        self.MotorRight.Break()
 
     def Exit(self):
         GPIO.cleanup()
