@@ -4,7 +4,7 @@ class CMPS03():
 
     #Modified From http://www.instructables.com/id/Raspberry-Pi-I2C-Python/step5/Example-1-CMPS03-Compass-Module/
 
-    def __init__(self, address, bus_num=1):
+    def __init__(self, address=0x60, bus_num=1):
         self.bus_num = bus_num
         self.address = address
         self.bus = smbus.SMBus(bus=bus_num)

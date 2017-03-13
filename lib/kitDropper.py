@@ -10,22 +10,26 @@ class KitDropper():
 
     def __init__(self, pin):
         self.pin = pin
+        
+        GPIO.setup(self.pin, GPIO.OUT)
+        self.Servo = GPIO.PWM(self.pin, 50)
+        
+        self.Servo.start(self.ClosePos)
+        time.sleep(self.CloseTime)
+        self.Servo.stop()
 
     def drop(self, ammount=1):
-        GPIO.setup(self.pin, GPIO.OUT)
+        
+        self.Servo = GPIO.PWM(self.pin, 50)
 
-        Servo = GPIO.PWM(self.pin, 50)
-        Servo.start(self.ClosePos)
+        self.Servo.start(self.ClosePos)
         
         for x in range(0, ammount):
             
-            Servo.ChangeDutyCycle(self.ClosePos)
-            time.sleep(self.CloseTime)
-
-            Servo.ChangeDutyCycle(self.OpenPos)
+            self.Servo.ChangeDutyCycle(self.OpenPos)
             time.sleep(self.OpenTime)
 
-            Servo.ChangeDutyCycle(self.ClosePos)
+            self.Servo.ChangeDutyCycle(self.ClosePos)
             time.sleep(self.CloseTime)
 
-        Servo.stop()
+        self.Servo.stop()
