@@ -3,9 +3,9 @@ import RPi.GPIO as GPIO
 
 from lib.motor import Motor
 from lib.srf04 import SRF04
-#from lib.cmps03 import CMPS03
+from lib.cmps10 import CMPS10
+# from lib.cmps03 import CMPS03
 from lib.mlx90614 import MLX90614
-from lib.hmc5883l import HMC5883L
 from lib.lineSensor import LineSensor
 from lib.kitDropper import KitDropper
 
@@ -19,26 +19,21 @@ class Robot():
     RightThermometerAddr = 0x2a
 
     #Line Sensor
-    LineSensorPin = 26
+    LineSensorPin = 32
 
     #SRF04
-    LeftSonarTRIG = 36
-    LeftSonarECHO = 15
+    LeftSonarTRIG = 8
+    LeftSonarECHO = 11
     
-    FrontSonarTRIG = 38
-    FrontSonarECHO = 23
+    FrontSonarTRIG = 10
+    FrontSonarECHO = 13
     
-    RightSonarTRIG = 40
-    RightSonarECHO = 32
+    RightSonarTRIG = 12
+    RightSonarECHO = 15
 
     #Pin1, Pin2
-    motorLeft = [37, 35] #Motor in Left
-    motorRight = [33, 31] #Motor in Right
-
-    #Vars
-    tileSize = 30.0
-    robotLenght = 21.0
-    robotWidth = 13.0
+    motorLeft = [31, 33] #Motor in Left
+    motorRight = [35, 37] #Motor in Right
 
     def __init__(self):
         
@@ -51,8 +46,8 @@ class Robot():
         #Kit Dropper Setup
         self.kitDropper = KitDropper(self.KitDropperPin)
 
-        #Gyroscope Setup
-        self.gyroscope = HMC5883L()
+        #Compass Setup
+        self.compass = CMPS10()
 
         #Thermometer Setup
         self.thermometerLeft = MLX90614(self.LeftThermometerAddr)
@@ -72,43 +67,20 @@ class Robot():
 
 
     def GetSonar(self):
-        leftCM = self.sonarLeft.getCM()
-
-        frontCM = self.sonarFront.getCM()
-        
-        rightCM = self.sonarRight.getCM()
-
-        print leftCM, frontCM, rightCM
-
-        return (leftCM, frontCM, rightCM)
-        
-        
-    def GetTile(self, distance):
-        tile = 0
-        while distance >= self.tileSize:
-            tile += 1
-            distance -= self.tileSize
-
-        exactPosition = False
-
-        gap = (self.tileSize - self.robotLenght) / 2
-
-        print gap
-
-        if distance >= (gap - 0.5) and distance <= (gap + 0.5):
-            exactPosition = True
-        
-        return (tile, exactPosition)
+        print "Left Sonar: ", self.sonarLeft.raw_distance()
+        print "Front Sonar: ", self.sonarFront.raw_distance()
+        print "Right Sonar: ", self.sonarRight.raw_distance()
 
     def DropKit(self, ammount = 1):
         self.Break()
-        
         time.sleep(0.1)
-
         self.kitDropper.drop(ammount)
 
     def GetXYZ(self):
-        return self.gyroscope.GetXYZ()
+        print "0-255: ", self.compass.bearing255()
+        print "0-360.0: ", self.compass.bearing3599()
+        print "Pich: ", self.compass.pich()
+        print "Roll: ", self.compass.roll()
 
     def IsVictim(self):
     
@@ -118,16 +90,11 @@ class Robot():
         self.ambTempRight = self.thermometerRight.get_amb_temp()
         self.objTempRight = self.thermometerRight.get_obj_temp()
         
-        print "Ambient Temperature Left : ", self.ambTempLeft
-        print "Object Temperature Left : ", self.objTempLeft
+        print "Ambient Temperature Left: ", self.ambTempLeft
+        print "Object Temperature Left: ", self.objTempLeft
 
-        print "Ambient Temperature Right : ", self.ambTempRight
-        print "Object Temperature Left : ", self.objTempRight
-
-        if (self.objTempLeft - self.ambTempLeft) > 5 or (self.objTempRight - self.ambTempRight) > 5:
-            return True
-        else:
-            return False
+        print "Ambient Temperature Right: ", self.ambTempRight
+        print "Object Temperature Right: ", self.objTempRight
 
 
     def Forward(self):

@@ -8,6 +8,7 @@ class CMPS10():
         self.bus = smbus.SMBus(bus=bus_num)
 
     def bearing255(self):
+        bear = self.bus.read_byte_data(self.address, 1)
         return bear #Compass Bearing as a byte, i.e. 0-255 for a full circle
 
     def bearing3599(self):  
