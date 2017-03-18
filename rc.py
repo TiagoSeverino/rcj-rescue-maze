@@ -17,7 +17,7 @@ robot = Robot()
  
 with picamera.PiCamera() as camera:
     with picamera.array.PiRGBArray(camera) as stream:
-        camera.resolution = (200, 150)
+        camera.resolution = (208, 160)
 
         while True:
             camera.capture(stream, 'bgr', use_video_port=True)
