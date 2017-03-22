@@ -38,16 +38,26 @@ with picamera.PiCamera() as camera:
                 robot.Right()
             elif key == ord(' '):
                 robot.DropKit()
-            elif key == ord('q'):
+            elif key == ord('1'):
+                robot.IsBlackTile()
+            elif key == ord('2'):
+                robot.GetLeftSonar()
+            elif key == ord('3'):
+                robot.GetFrontSonar()
+            elif key == ord('4'):
+                robot.GetRightSonar()
+            elif key == ord('5'):
+                robot.GetBearing()
+            elif key == ord('6'):
+                robot.GetPich()
+            elif key == ord('7'):
+                robot.GetRoll()
+            elif key == ord('8'):
+                robot.GetTemperatureLeft()
+            elif key == ord('9'):
+                robot.GetTemperatureRight()
+			elif key == ord('q'):
                 break
-            elif key == ord('x'):
-                robot.GetXYZ()
-            elif key == ord('t'):
-                robot.IsVictim()
-            elif key == ord('b'):
-                robot.IsVoidTile()
-            elif key == ord('y'):
-                robot.GetSonar()
             else:
                 robot.Stop()
                 
