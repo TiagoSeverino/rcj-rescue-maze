@@ -156,6 +156,43 @@ class Robot():
 
 		return (self.ambTempRight, self.objTempRight)
 
+	def GetTile(self, distance):
+		tile = 0
+
+		while distance >= 30.0:
+			tile += 1
+			distance -= 30.0
+
+		return (tile, distance)
+
+	def MoveTile(self):
+		(tile, distance) = self.GetTile(self.GetFrontSonar())
+		
+		if tile > 0:
+			finalTile = tile - 1
+
+			while True:
+				
+				(tile, distance) = self.GetTile(self.GetFrontSonar())
+
+				if tile > finalTile:
+					self.Forward()
+				elif tile < finalTile:
+					self.Backward()
+				else:
+					if distance < 5.0:
+						self.Backward()
+					elif distance > 10.0:
+						self.Forward()
+					else:
+						self.Break()
+						print "Moved 1 Tile!"
+						break
+			else:
+				print "Can't move Forward"
+			
+		
+
 	def RotateLeft(self):
 
 		if self.Direction > 1:

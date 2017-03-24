@@ -1,5 +1,7 @@
 import RPi.GPIO as GPIO
 
+#http://micromotors.eu/ L149
+
 class Motor():
 
 	def __init__(self, pin1, pin2):
