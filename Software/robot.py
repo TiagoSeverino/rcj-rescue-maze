@@ -1,7 +1,7 @@
 import time
 import RPi.GPIO as GPIO
 
-from lib.motor import Motor
+from lib.l298n import L298N
 from lib.srf04 import SRF04
 from lib.cmps10 import CMPS10
 # from lib.cmps03 import CMPS03
@@ -14,6 +14,7 @@ class Robot():
 	#Kit Dropper
 	KitDropperPin = 7
 
+
 	#MLX90614
 	LeftThermometerAddr = 0x5a
 	RightThermometerAddr = 0x2a
@@ -24,32 +25,32 @@ class Robot():
 	#SRF04
 	LeftSonarTRIG = 8
 	LeftSonarECHO = 11
-	
+
 	FrontSonarTRIG = 10
 	FrontSonarECHO = 13
-	
+
 	RightSonarTRIG = 12
 	RightSonarECHO = 15
 
-	#Pin1, Pin2
-	motorLeft = [35, 37] #Motor in Left
-	motorRight = [38, 40] #Motor in Right
-	
+	#Pin1, Pin2, PWM
+	motorLeft = [35, 37, 33] #Motor in Left
+	motorRight = [38, 40, 36] #Motor in Right
+
 	#Vars
-	
+
 	#Arena Vars
 	Lenght = 22.0
 	Width = 13.0
-	TileSize =30.0
+	TileSize = 30.0
 
 	#Localization Vars
 	Direction = 0
 
 
 	def __init__(self):
-		
+
+		GPIO.setwarnings(False)
 		GPIO.setmode(GPIO.BOARD)
-		#GPIO.setwarnings(False)
 
 		#Line Sensor Setup
 		self.LineSensor = LineSensor(self.LineSensorPin)
@@ -65,44 +66,46 @@ class Robot():
 		self.thermometerRight = MLX90614(self.RightThermometerAddr)
 
 		#Sonar Setup
-		self.sonarLeft = SRF04(self.LeftSonarTRIG, self.LeftSonarECHO)
-		self.sonarFront = SRF04(self.FrontSonarTRIG, self.FrontSonarECHO)
-		self.sonarRight = SRF04(self.RightSonarTRIG, self.RightSonarECHO)
+		self.sonar = []
+		
+		self.sonar.append(SRF04(self.LeftSonarTRIG, self.LeftSonarECHO))
+		self.sonar.append(SRF04(self.FrontSonarTRIG, self.FrontSonarECHO)) 
+		self.sonar.append(SRF04(self.RightSonarTRIG, self.RightSonarECHO))
 
 		#Motors Setup
-		self.MotorLeft = Motor(self.motorLeft[0], self.motorLeft[1])
-		self.MotorRight = Motor(self.motorRight[0], self.motorRight[1])
+		self.MotorLeft = L298N(self.motorLeft[0], self.motorLeft[1], self.motorLeft[2])
+		self.MotorRight = L298N(self.motorRight[0], self.motorRight[1], self.motorRight[2])
 
 
 		#Register Position
 		self.CompassOffset = self.compass.bearing3599()
 
+	"""
+	### Sensor Data ###
+	"""
 
-	def GetLeftSonar(self):
 
-		distance = self.sonarLeft.raw_distance()
-		print "Left Sonar: ", distance
+	def GetSonar(self, direction = "Front"):
+		side = direction
+		direction = direction.lower()
+
+		sonar = 0
+		
+		if direction == "left":
+			sonar = 0
+		elif direction == "front":
+			sonar = 1
+		elif direction == "right":
+			sonar = 2
+		else:
+			return 0
+
+		distance = self.sonar[sonar].getCM()
+		#print side, " Sonar: ", distance
 
 		return distance
 
-
-	def GetFrontSonar(self):
-
-		distance = self.sonarFront.raw_distance()
-		print "Front Sonar: ", distance
-
-		return distance
-
-
-	def GetRightSonar(self):
-
-		distance = self.sonarRight.raw_distance()
-		print "Right Sonar: ", distance
-
-		return distance
-
-
-	def DropKit(self, ammount = 1):
+	def DropKit(self, ammount=1):
 		self.Break()
 		time.sleep(0.1)
 		self.kitDropper.drop(ammount)
@@ -117,8 +120,8 @@ class Robot():
 			bearing -= 360.0
 		elif bearing < 0.0:
 			bearing += 360.0
-		
-		print "Bearing: ", bearing
+
+		#print "Bearing: ", bearing
 
 		return bearing
 
@@ -150,11 +153,15 @@ class Robot():
 	def GetTemperatureRight(self):
 		self.ambTempRight = self.thermometerRight.get_amb_temp()
 		self.objTempRight = self.thermometerRight.get_obj_temp()
-		
+
 		print "Ambient Temperature Right: ", self.ambTempRight
 		print "Object Temperature Right: ", self.objTempRight
 
 		return (self.ambTempRight, self.objTempRight)
+
+	"""
+	### Precise Moving ###
+	"""
 
 	def GetTile(self, distance):
 		tile = 0
@@ -166,148 +173,151 @@ class Robot():
 		return (tile, distance)
 
 	def MoveTile(self):
-		(tile, distance) = self.GetTile(self.GetFrontSonar())
-		
+		(tile, distance) = self.GetTile(self.GetSonar())
+
 		if tile > 0:
 			finalTile = tile - 1
+		else:
+			finalTile = 0
 
-			while True:
-				
-				(tile, distance) = self.GetTile(self.GetFrontSonar())
+		while True:
 
-				if tile > finalTile:
-					self.Forward()
-				elif tile < finalTile:
-					self.Backward()
-				else:
-					if distance < 5.0:
-						self.Backward()
-					elif distance > 10.0:
-						self.Forward()
-					else:
-						self.Break()
-						print "Moved 1 Tile!"
-						break
+			(tile, distance) = self.GetTile(self.GetSonar())
+
+			if tile > finalTile:
+				self.Forward()
+			elif tile < finalTile:
+				self.Backward()
 			else:
-				print "Can't move Forward"
-			
-		
+				if distance < 6.5:
+					self.Backward()
+				elif distance > 9.5:
+					self.Forward()
+				else:
+					self.Break()
+					
+					time.sleep(0.5)
+
+					self.Rotate(self.Direction)
+
+					print "Moved 1 Tile!"
+					break
+
+
+		else:
+			print "Can't move Forward"
+
+
 
 	def RotateLeft(self):
 
-		if self.Direction > 1:
-			FinalDirection = (self.Direction - 1) * 90
-
-			while True:
-				direction = self.GetBearing()
-				if direction > FinalDirection + 2.5:
-					self.Left()
-				elif direction < FinalDirection - 2.5:
-					self.Right()
-				else:
-					self.Direction += 1
-					self.Break()
-					break
+		if self.Direction == 1:
+			self.Rotate(0)
+		elif self.Direction == 2:
+			self.Rotate(1)
+		elif self.Direction == 3:
+			self.Rotate(2)
 		elif self.Direction == 0:
-			while True:
-				direction = self.GetBearing()
-				if direction <= 90.0 or direction > 272.5:
-					self.Left()
-				elif direction >= 90.0 and direction < 267.7:
-					self.Right()
-				else:
-					self.Direction = 3
-					self.Break()
-					break
-		else: # self.Direction == 1:
-			while True:
-				direction = self.GetBearing()
-				if direction > 2.5 and direction <= 180.0:
-					self.Left()
-				elif direction < 357.5 and direction >= 180.0:
-					self.Right()
-				else:
-					self.Direction = 0
-					self.Break()
-					break
+			self.Rotate(3)
 
 		print "Rotated Left!"
 
 	def RotateRight(self):
-
-		if self.Direction < 3 and self.Direction != 0:
-			FinalDirection = (self.Direction - 3) * 90
-
-			while True:
-				direction = self.GetBearing()
-				if direction > FinalDirection + 2.5:
-					self.Left()
-				elif direction < FinalDirection - 2.5:
-					self.Right()
-				else:
-					self.Direction += 1
-					self.Break()
-					break
+		
+		if self.Direction == 1:
+			self.Rotate(2)
+		elif self.Direction == 2:
+			self.Rotate(3)
+		elif self.Direction == 3:
+			self.Rotate(0)
 		elif self.Direction == 0:
-			while True:
-				direction = self.GetBearing()
-				if direction < 87.5 or direction >= 270.0:
-					self.Right()
-				elif direction > 92.5 and direction <= 270.0:
-					self.Left()
-				else:
-					self.Direction = 1
-					self.Break()
-					break
-		else: # self.Direction == 3:
-			while True:
-				direction = self.GetBearing()
-				if direction > 2.5 and direction <= 180.0:
-					self.Left()
-				elif direction < 357.5 and direction >= 180.0:
-					self.Right()
-				else:
-					self.Direction = 0
-					self.Break()
-					break
+			self.Rotate(1)
 
 		print "Rotated Right!"
 
+	def Rotate(self, position, loop = True):
+		while True:
+			
+			direction = self.GetBearing()
+			rotateSpeed = 25
 
-	def Forward(self):
-		self.MotorLeft.Forward()
-		self.MotorRight.Forward()
-		print "Forward"
+			if position == 0: ### Rotate To Direction 0
+				if direction < 358 and direction >= 180.0:
+					self.Right(speed = rotateSpeed)
+				elif direction > 2 and direction <= 180.0:
+					self.Left(speed = rotateSpeed)
+				else:
+					self.Direction = 0
+					break
+			elif position == 1: ### Rotate To Direction 1
+				if direction < 88 or direction >= 270.0:
+					self.Right(speed = rotateSpeed)
+				elif direction > 92 and direction <= 270.0:
+					self.Left(speed = rotateSpeed)
+				else:
+					self.Direction = 1
+					break
+			elif position == 2: ### Rotate To Direction 2
+				if direction < 178:
+					self.Right(speed = rotateSpeed)
+				elif direction > 182:
+					self.Left(speed = rotateSpeed)
+				else:
+					self.Direction = 2
+					break
+			else: ### Rotate To Direction 3
+				if direction < 268 and direction >= 90.0:
+					self.Right(speed = rotateSpeed)
+				elif direction > 272 or direction <= 90.0:
+					self.Left(speed = rotateSpeed)
+				else:
+					self.Direction = 3
+					break
+			
+			if loop == False:
+				break
+		self.Break()
+		time.sleep(0.5)
 
 
-	def Backward(self):
-		self.MotorLeft.Backward()
-		self.MotorRight.Backward()
-		print "Backward"
+	"""
+	### Motor Control ###
+	"""
+
+	def Forward(self, speed = 100):
+		self.MotorLeft.Forward(speed)
+		self.MotorRight.Forward(speed)
+		#print "Forward"
 
 
-	def Left(self):
-		self.MotorLeft.Backward()
-		self.MotorRight.Forward()
-		print "Left"
+	def Backward(self, speed = 100):
+		self.MotorLeft.Backward(speed)
+		self.MotorRight.Backward(speed)
+		#print "Backward"
 
 
-	def Right(self):
-		self.MotorLeft.Forward()
-		self.MotorRight.Backward()
-		print "Right"
+	def Left(self, speed = 100):
+		self.MotorLeft.Backward(speed)
+		self.MotorRight.Forward(speed)
+		#print "Left"
 
 
-	def Stop(self):
-		self.MotorLeft.Stop()
-		self.MotorRight.Stop()
-		print "Stop"
+	def Right(self, speed = 100):
+		self.MotorLeft.Forward(speed)
+		self.MotorRight.Backward(speed)
+		#print "Right"
 
 
-	def Break(self):
-		self.MotorLeft.Break()
-		self.MotorRight.Break()
-		print "Break"
+	def Stop(self, speed = 0):
+		self.MotorLeft.Stop(speed)
+		self.MotorRight.Stop(speed)
+		#print "Stop"
+
+
+	def Break(self, speed = 100):
+		self.MotorLeft.Break(speed)
+		self.MotorRight.Break(speed)
+		#print "Break"
 
 
 	def Exit(self):
