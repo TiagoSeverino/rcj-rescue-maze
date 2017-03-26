@@ -1,4 +1,5 @@
 import smbus
+import time
 
 class CMPS10():
 	
@@ -42,3 +43,5 @@ class CMPS10():
 
 		raw_input("Turn 90 degrees Right")
 		self.bus.write_byte_data(self.address, 22, 0xF5)
+
+		raw_input("Sucessfully Calibrated!")

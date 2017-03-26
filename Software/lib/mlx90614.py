@@ -8,6 +8,7 @@ echo "Y" > /sys/module/i2c_bcm2708/parameters/combined
 #Modified From https://github.com/CRImier/python-MLX90614
 
 import smbus
+import subprocess
 
 class MLX90614():
 
@@ -35,7 +36,11 @@ class MLX90614():
 		self.bus = smbus.SMBus(bus=bus_num)
 
 	def read_reg(self, reg_addr):
-		return self.bus.read_word_data(self.address, reg_addr)
+		try:
+			return self.bus.read_word_data(self.address, reg_addr)
+		except IOError:
+			print "Error Reading Temperature"
+			return 0
 
 	def data_to_temp(self, data):
 		temp = (data*0.02) - 273.15

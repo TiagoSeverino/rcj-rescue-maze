@@ -101,7 +101,6 @@ class Robot():
 			return 0
 
 		distance = self.sonar[sonar].getCM()
-		#print side, " Sonar: ", distance
 
 		return distance
 
@@ -109,6 +108,7 @@ class Robot():
 		self.Break()
 		time.sleep(0.1)
 		self.kitDropper.drop(ammount)
+		print "Dropped", ammount, " kits!"
 
 
 	def GetBearing(self):
@@ -121,43 +121,55 @@ class Robot():
 		elif bearing < 0.0:
 			bearing += 360.0
 
-		#print "Bearing: ", bearing
-
 		return bearing
 
 
 	def GetPich(self):
 		pich = self.compass.pich()
-		print "Pich: ", pich
 
 		return pich
 
 
 	def GetRoll(self):
 		roll = self.compass.roll()
-		print "Roll: ", roll
 
 		return roll
 
 
 	def GetTemperatureLeft(self):
 		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
-		self.objTempLeft = self.thermometerLeft.get_obj_temp()
 
-		print "Ambient Temperature Left: ", self.ambTempLeft
-		print "Object Temperature Left: ", self.objTempLeft
+		time.sleep(0.00001)
+
+		self.objTempLeft = self.thermometerLeft.get_obj_temp()
 
 		return (self.ambTempLeft, self.objTempLeft)
 
 
 	def GetTemperatureRight(self):
 		self.ambTempRight = self.thermometerRight.get_amb_temp()
+
+		time.sleep(0.00001)
+
 		self.objTempRight = self.thermometerRight.get_obj_temp()
 
-		print "Ambient Temperature Right: ", self.ambTempRight
-		print "Object Temperature Right: ", self.objTempRight
-
 		return (self.ambTempRight, self.objTempRight)
+
+	def IsVictim(self):
+
+		tempGap = 10
+
+		(ambLeft, objLeft) = self.GetTemperatureLeft()
+
+		time.sleep(0.00001)
+
+		(ambRight, objRight) = self.GetTemperatureRight()
+
+		if (objLeft - ambLeft) > tempGap or (objRight - ambRight) > tempGap:
+			print "Victim Detected!"
+			return True
+
+		return False
 
 	"""
 	### Precise Moving ###
@@ -183,6 +195,9 @@ class Robot():
 		while True:
 
 			(tile, distance) = self.GetTile(self.GetSonar())
+
+			if self.IsVictim():
+				self.DropKit()
 
 			if tile > finalTile:
 				self.Forward()
@@ -236,10 +251,13 @@ class Robot():
 		print "Rotated Right!"
 
 	def Rotate(self, position, loop = True):
+
+		rotateSpeed = 60
+
 		while True:
 			
 			direction = self.GetBearing()
-			rotateSpeed = 25
+			
 
 			if position == 0: ### Rotate To Direction 0
 				if direction < 358 and direction >= 180.0:
@@ -287,37 +305,31 @@ class Robot():
 	def Forward(self, speed = 100):
 		self.MotorLeft.Forward(speed)
 		self.MotorRight.Forward(speed)
-		#print "Forward"
 
 
 	def Backward(self, speed = 100):
 		self.MotorLeft.Backward(speed)
 		self.MotorRight.Backward(speed)
-		#print "Backward"
 
 
 	def Left(self, speed = 100):
 		self.MotorLeft.Backward(speed)
 		self.MotorRight.Forward(speed)
-		#print "Left"
 
 
 	def Right(self, speed = 100):
 		self.MotorLeft.Forward(speed)
 		self.MotorRight.Backward(speed)
-		#print "Right"
 
 
 	def Stop(self, speed = 0):
 		self.MotorLeft.Stop(speed)
 		self.MotorRight.Stop(speed)
-		#print "Stop"
 
 
 	def Break(self, speed = 100):
 		self.MotorLeft.Break(speed)
 		self.MotorRight.Break(speed)
-		#print "Break"
 
 
 	def Exit(self):
