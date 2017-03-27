@@ -4,9 +4,8 @@ import RPi.GPIO as GPIO
 from lib.l298n import L298N
 from lib.srf04 import SRF04
 from lib.cmps10 import CMPS10
-# from lib.cmps03 import CMPS03
+from lib.cmps03 import CMPS03
 from lib.mlx90614 import MLX90614
-from lib.lineSensor import LineSensor
 from lib.kitDropper import KitDropper
 
 class Robot():
@@ -14,34 +13,36 @@ class Robot():
 	#Kit Dropper
 	KitDropperPin = 7
 
+	#CMPS03
+	CMPS03_Addr = 0x61
+
+	#CMPS10
+	CMPS10_Addr = 0x61
 
 	#MLX90614
 	LeftThermometerAddr = 0x5a
 	RightThermometerAddr = 0x2a
 
-	#Line Sensor
-	LineSensorPin = 36
-
 	#SRF04
-	LeftSonarTRIG = 8
+	LeftSonarTRIG = 19
 	LeftSonarECHO = 11
 
-	FrontSonarTRIG = 10
+	FrontSonarTRIG = 21
 	FrontSonarECHO = 13
 
-	RightSonarTRIG = 12
+	RightSonarTRIG = 23
 	RightSonarECHO = 15
 
 	#Pin1, Pin2, PWM
-	motorLeft = [35, 37, 33] #Motor in Left
-	motorRight = [38, 40, 36] #Motor in Right
+	motorLeft = [38, 40, 36] #Motor in Left
+	motorRight = [35, 37, 33] #Motor in Right
 
 	#Vars
 
 	#Arena Vars
-	Lenght = 22.0
-	Width = 13.0
-	TileSize = 30.0
+	SonarOffSetV = 14.0 #Vertical distance between center of robot and front sonars
+	SonarOffSetH = 4.0 #Horizontal distance between center of robot and side sonars
+	TileSize = 30.0 #Gap Between
 
 	#Localization Vars
 	Direction = 0
@@ -52,14 +53,14 @@ class Robot():
 		GPIO.setwarnings(False)
 		GPIO.setmode(GPIO.BOARD)
 
-		#Line Sensor Setup
-		self.LineSensor = LineSensor(self.LineSensorPin)
-
 		#Kit Dropper Setup
 		self.kitDropper = KitDropper(self.KitDropperPin)
 
 		#Compass Setup
-		self.compass = CMPS10()
+		self.compass = CMPS03(self.CMPS03_Addr)
+
+		#Tilt Compensated Compass Setup
+		self.tiltCompass = CMPS10(self.CMPS10_Addr)
 
 		#Thermometer Setup
 		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)
@@ -123,15 +124,27 @@ class Robot():
 
 		return bearing
 
+	def GetTiltBearing(self):
+		bearing = self.tiltCompass.bearing3599()
+
+		bearing -= self.CompassOffset
+
+		if bearing > 360.0:
+			bearing -= 360.0
+		elif bearing < 0.0:
+			bearing += 360.0
+
+		return bearing
+
 
 	def GetPich(self):
-		pich = self.compass.pich()
+		pich = self.tiltCompass.pich()
 
 		return pich
 
 
 	def GetRoll(self):
-		roll = self.compass.roll()
+		roll = self.tiltCompass.roll()
 
 		return roll
 
@@ -178,9 +191,9 @@ class Robot():
 	def GetTile(self, distance):
 		tile = 0
 
-		while distance >= 30.0:
+		while distance >= self.TileSize:
 			tile += 1
-			distance -= 30.0
+			distance -= self.TileSize
 
 		return (tile, distance)
 
@@ -191,6 +204,9 @@ class Robot():
 			finalTile = tile - 1
 		else:
 			finalTile = 0
+
+		positionGap = 1.0 #Margin For Robot To Stop in Center of Tile
+		frontDistance = (self.TileSize / 2) + self.SonarOffSetV
 
 		while True:
 
@@ -204,9 +220,9 @@ class Robot():
 			elif tile < finalTile:
 				self.Backward()
 			else:
-				if distance < 6.5:
+				if distance < frontDistance - positionGap:
 					self.Backward()
-				elif distance > 9.5:
+				elif distance > frontDistance + positionGap:
 					self.Forward()
 				else:
 					self.Break()
@@ -250,7 +266,7 @@ class Robot():
 
 		print "Rotated Right!"
 
-	def Rotate(self, position, loop = True):
+	def Rotate(self, position, loop = True, margin = 2):
 
 		rotateSpeed = 60
 
@@ -260,33 +276,33 @@ class Robot():
 			
 
 			if position == 0: ### Rotate To Direction 0
-				if direction < 358 and direction >= 180.0:
+				if direction < 360.0 - margin and direction >= 180.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 2 and direction <= 180.0:
+				elif direction > 0 + margin and direction <= 180.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = 0
 					break
 			elif position == 1: ### Rotate To Direction 1
-				if direction < 88 or direction >= 270.0:
+				if direction < 90 - margin or direction >= 270.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 92 and direction <= 270.0:
+				elif direction > 90 + margin and direction <= 270.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = 1
 					break
 			elif position == 2: ### Rotate To Direction 2
-				if direction < 178:
+				if direction < 180 - margin:
 					self.Right(speed = rotateSpeed)
-				elif direction > 182:
+				elif direction > 180.0 + margin:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = 2
 					break
 			else: ### Rotate To Direction 3
-				if direction < 268 and direction >= 90.0:
+				if direction < 270.0 - margin and direction >= 90.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 272 or direction <= 90.0:
+				elif direction > 270.0 + margin or direction <= 90.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = 3
