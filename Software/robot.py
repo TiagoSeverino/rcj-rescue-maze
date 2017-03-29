@@ -5,13 +5,22 @@ from lib.l298n import L298N
 from lib.srf04 import SRF04
 from lib.cmps10 import CMPS10
 from lib.cmps03 import CMPS03
+from lib.camera import Camera
 from lib.mlx90614 import MLX90614
 from lib.kitDropper import KitDropper
+from lib.cameraServo import CameraServo
 
 class Robot():
 
-	#Kit Dropper
+	#Kit Dropper Servo
 	KitDropperPin = 7
+
+	#Camera Servo
+	CameraServoPin = 9
+
+	#Camera Resolution
+	CameraWidth = 208
+	CameraHeight = 160
 
 	#CMPS03
 	CMPS03_Addr = 0x61
@@ -53,8 +62,14 @@ class Robot():
 		GPIO.setwarnings(False)
 		GPIO.setmode(GPIO.BOARD)
 
-		#Kit Dropper Setup
+		#Kit Dropper Servo Setup
 		self.kitDropper = KitDropper(self.KitDropperPin)
+
+		#Camera Servo Setup
+		self.cameraServo = CameraServo(self.CameraServoPin)
+
+		#Camera Setup
+		self.camera = Camera(width = self.CameraWidth, height = self.CameraHeight)
 
 		#Compass Setup
 		self.compass = CMPS03(self.CMPS03_Addr)
@@ -77,7 +92,6 @@ class Robot():
 		self.MotorLeft = L298N(self.motorLeft[0], self.motorLeft[1], self.motorLeft[2])
 		self.MotorRight = L298N(self.motorRight[0], self.motorRight[1], self.motorRight[2])
 
-
 		#Register Position
 		self.CompassOffset = self.compass.bearing3599()
 
@@ -85,25 +99,29 @@ class Robot():
 	### Sensor Data ###
 	"""
 
-
-	def GetSonar(self, direction = "Front"):
-		side = direction
+	def SonarToID(direction):
 		direction = direction.lower()
 
-		sonar = 0
-		
 		if direction == "left":
-			sonar = 0
-		elif direction == "front":
-			sonar = 1
-		elif direction == "right":
-			sonar = 2
-		else:
 			return 0
+		elif direction == "right":
+			return 2
+		else: # Front Sonar
+			return 1
 
-		distance = self.sonar[sonar].getCM()
+	def GetSonar(self, direction = "Front"):
+
+		distance = self.sonar[self.SonarToID(direction)].getCM()
 
 		return distance
+
+	def IsWall(self, direction = "Front"):
+		distance = self.GetSonar(direction)
+
+		if distance > self.TileSize:
+			return False
+		else:
+			return True
 
 	def DropKit(self, ammount=1):
 		self.Break()
@@ -135,7 +153,6 @@ class Robot():
 			bearing += 360.0
 
 		return bearing
-
 
 	def GetPich(self):
 		pich = self.tiltCompass.pich()
