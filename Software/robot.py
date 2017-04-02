@@ -1,29 +1,15 @@
 import time
 import RPi.GPIO as GPIO
 
-from lib.l298n import L298N
-from lib.srf04 import SRF04
-from lib.cmps10 import CMPS10
-from lib.cmps03 import CMPS03
-from lib.camera import Camera
-from lib.mlx90614 import MLX90614
-from lib.kitDropper import KitDropper
-from lib.cameraServo import CameraServo
+from sensor.l298n import L298N
+from sensor.srf04 import SRF04
+from sensor.cmps03 import CMPS03
+from sensor.cmps10 import CMPS10
 
 class Robot():
 
-	#Kit Dropper Servo
-	KitDropperPin = 7
-
-	#Camera Servo
-	CameraServoPin = 9
-
-	#Camera Resolution
-	CameraWidth = 208
-	CameraHeight = 160
-
 	#CMPS03
-	CMPS03_Addr = 0x61
+	CMPS03_Addr = 0x60
 
 	#CMPS10
 	CMPS10_Addr = 0x61
@@ -42,44 +28,25 @@ class Robot():
 	RightSonarTRIG = 23
 	RightSonarECHO = 15
 
+
 	#Pin1, Pin2, PWM
-	motorLeft = [38, 40, 36] #Motor in Left
-	motorRight = [35, 37, 33] #Motor in Right
+	motorLeft = [37, 35, 33] #Motor in Left
+	motorRight = [40, 38, 36] #Motor in Right
 
 	#Vars
-
-	#Arena Vars
-	SonarOffSetV = 14.0 #Vertical distance between center of robot and front sonars
-	SonarOffSetH = 4.0 #Horizontal distance between center of robot and side sonars
-	TileSize = 30.0 #Gap Between
-
-	#Localization Vars
-	Direction = 0
-
+	TileSize = 30.0
+	Direction = 0 # Compass Direction: 0, North; 1, East; 2, South; 3, West
 
 	def __init__(self):
 
 		GPIO.setwarnings(False)
 		GPIO.setmode(GPIO.BOARD)
 
-		#Kit Dropper Servo Setup
-		self.kitDropper = KitDropper(self.KitDropperPin)
-
-		#Camera Servo Setup
-		self.cameraServo = CameraServo(self.CameraServoPin)
-
-		#Camera Setup
-		self.camera = Camera(width = self.CameraWidth, height = self.CameraHeight)
-
 		#Compass Setup
 		self.compass = CMPS03(self.CMPS03_Addr)
 
 		#Tilt Compensated Compass Setup
 		self.tiltCompass = CMPS10(self.CMPS10_Addr)
-
-		#Thermometer Setup
-		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)
-		self.thermometerRight = MLX90614(self.RightThermometerAddr)
 
 		#Sonar Setup
 		self.sonar = []
@@ -96,123 +63,8 @@ class Robot():
 		self.CompassOffset = self.compass.bearing3599()
 
 	"""
-	### Sensor Data ###
+	### Functions
 	"""
-
-	def SonarToID(direction):
-		direction = direction.lower()
-
-		if direction == "left":
-			return 0
-		elif direction == "right":
-			return 2
-		else: # Front Sonar
-			return 1
-
-	def GetSonar(self, direction = "Front"):
-
-		distance = self.sonar[self.SonarToID(direction)].getCM()
-
-		return distance
-
-	def IsWall(self, direction = "Front"):
-		distance = self.GetSonar(direction)
-
-		if distance > self.TileSize:
-			return False
-		else:
-			return True
-
-	def DropKit(self, ammount=1):
-		self.Break()
-		time.sleep(0.1)
-		self.kitDropper.drop(ammount)
-		print "Dropped", ammount, " kits!"
-
-
-	def GetBearing(self):
-		bearing = self.compass.bearing3599()
-
-		bearing -= self.CompassOffset
-
-		if bearing > 360.0:
-			bearing -= 360.0
-		elif bearing < 0.0:
-			bearing += 360.0
-
-		return bearing
-
-	def GetTiltBearing(self):
-		bearing = self.tiltCompass.bearing3599()
-
-		bearing -= self.CompassOffset
-
-		if bearing > 360.0:
-			bearing -= 360.0
-		elif bearing < 0.0:
-			bearing += 360.0
-
-		return bearing
-
-	def GetPich(self):
-		pich = self.tiltCompass.pich()
-
-		return pich
-
-
-	def GetRoll(self):
-		roll = self.tiltCompass.roll()
-
-		return roll
-
-
-	def GetTemperatureLeft(self):
-		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
-
-		time.sleep(0.00001)
-
-		self.objTempLeft = self.thermometerLeft.get_obj_temp()
-
-		return (self.ambTempLeft, self.objTempLeft)
-
-
-	def GetTemperatureRight(self):
-		self.ambTempRight = self.thermometerRight.get_amb_temp()
-
-		time.sleep(0.00001)
-
-		self.objTempRight = self.thermometerRight.get_obj_temp()
-
-		return (self.ambTempRight, self.objTempRight)
-
-	def IsVictim(self):
-
-		tempGap = 10
-
-		(ambLeft, objLeft) = self.GetTemperatureLeft()
-
-		time.sleep(0.00001)
-
-		(ambRight, objRight) = self.GetTemperatureRight()
-
-		if (objLeft - ambLeft) > tempGap or (objRight - ambRight) > tempGap:
-			print "Victim Detected!"
-			return True
-
-		return False
-
-	"""
-	### Precise Moving ###
-	"""
-
-	def GetTile(self, distance):
-		tile = 0
-
-		while distance >= self.TileSize:
-			tile += 1
-			distance -= self.TileSize
-
-		return (tile, distance)
 
 	def MoveTile(self):
 		(tile, distance) = self.GetTile(self.GetSonar())
@@ -222,15 +74,12 @@ class Robot():
 		else:
 			finalTile = 0
 
-		positionGap = 1.0 #Margin For Robot To Stop in Center of Tile
-		frontDistance = (self.TileSize / 2) + self.SonarOffSetV
+		positionGap = 0.25 #Margin For Robot To Stop in Center of Tile
+		frontDistance = (self.TileSize / 2) - 7.0
 
 		while True:
 
 			(tile, distance) = self.GetTile(self.GetSonar())
-
-			if self.IsVictim():
-				self.DropKit()
 
 			if tile > finalTile:
 				self.Forward()
@@ -248,14 +97,16 @@ class Robot():
 
 					self.Rotate(self.Direction)
 
-					print "Moved 1 Tile!"
 					break
 
+	def GetTile(self, distance):
+		tile = 0
 
-		else:
-			print "Can't move Forward"
+		while distance >= self.TileSize:
+			tile += 1
+			distance -= self.TileSize
 
-
+		return (tile, distance)
 
 	def RotateLeft(self):
 
@@ -268,8 +119,6 @@ class Robot():
 		elif self.Direction == 0:
 			self.Rotate(3)
 
-		print "Rotated Left!"
-
 	def RotateRight(self):
 		
 		if self.Direction == 1:
@@ -281,11 +130,9 @@ class Robot():
 		elif self.Direction == 0:
 			self.Rotate(1)
 
-		print "Rotated Right!"
+	def Rotate(self, position, loop = True, margin = 1):
 
-	def Rotate(self, position, loop = True, margin = 2):
-
-		rotateSpeed = 60
+		rotateSpeed = 2
 
 		while True:
 			
@@ -301,25 +148,25 @@ class Robot():
 					self.Direction = 0
 					break
 			elif position == 1: ### Rotate To Direction 1
-				if direction < 90 - margin or direction >= 270.0:
+				if direction < 70 - margin or direction >= 270.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 90 + margin and direction <= 270.0:
+				elif direction > 70 + margin and direction <= 270.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = 1
 					break
 			elif position == 2: ### Rotate To Direction 2
-				if direction < 180 - margin:
+				if direction < 190 - margin:
 					self.Right(speed = rotateSpeed)
-				elif direction > 180.0 + margin:
+				elif direction > 190.0 + margin:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = 2
 					break
 			else: ### Rotate To Direction 3
-				if direction < 270.0 - margin and direction >= 90.0:
+				if direction < 290.0 - margin and direction >= 90.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 270.0 + margin or direction <= 90.0:
+				elif direction > 290.0 + margin or direction <= 90.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = 3
@@ -327,44 +174,126 @@ class Robot():
 			
 			if loop == False:
 				break
+
 		self.Break()
 		time.sleep(0.5)
 
+	def GetWalls(self):
+		sonarLeft = self.GetSonar("Left")
+		sonarFront = self.GetSonar("Front")
+		sonarRight = self.GetSonar("Right")
+
+		wallLeft = True
+		wallFront = True
+		wallRight = True
+
+		gap = self.TileSize - 2.0
+
+		if sonarLeft > gap:
+			wallLeft = False
+
+		if sonarFront > gap:
+			wallFront = False
+
+		if sonarRight > gap:
+			wallRight = False
+
+		return (wallLeft, wallFront, wallRight)
+
+
+	"""
+	### Sensors
+	"""
+
+	def GetBearing(self):
+		bearing = self.compass.bearing3599()
+
+		bearing -= self.CompassOffset
+
+		if bearing > 360.0:
+			bearing -= 360.0
+		elif bearing < 0.0:
+			bearing += 360.0
+
+		return bearing
+
+	def GetSonar(self, direction = "Front"):
+
+		direction = direction.lower()
+		sonarNumber = 0
+
+		if direction == "left":
+			sonarNumber = 0
+		elif direction == "right":
+			sonarNumber = 2
+		else: # Front Sonar
+			sonarNumber = 1
+
+		distance = self.sonar[sonarNumber].getCM()
+
+		return distance
 
 	"""
 	### Motor Control ###
 	"""
 
-	def Forward(self, speed = 100):
-		self.MotorLeft.Forward(speed)
-		self.MotorRight.Forward(speed)
+	def MotorSpeedCalibration(self, speed):
+		mLeft = 0
+		mRight = 0
+
+		if speed == 1:
+			mLeft = 19
+			mRight = 20
+		elif speed == 2:
+			mLeft = 35
+			mRight = 40
+		elif speed == 3:
+			mLeft = 50
+			mRight = 60
+		elif speed == 4:
+			mLeft = 65
+			mRight = 80
+		elif speed == 5:
+			mLeft = 80
+			mRight = 100
+
+		return (mLeft, mRight)
+
+	def Forward(self, speed = 3):
+		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Forward(speedLeft)
+		self.MotorRight.Forward(speedRight)
 
 
-	def Backward(self, speed = 100):
-		self.MotorLeft.Backward(speed)
-		self.MotorRight.Backward(speed)
+	def Backward(self, speed = 3):
+		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Backward(speedLeft)
+		self.MotorRight.Backward(speedRight)
 
 
-	def Left(self, speed = 100):
-		self.MotorLeft.Backward(speed)
-		self.MotorRight.Forward(speed)
+	def Left(self, speed = 2):
+		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Backward(speedLeft)
+		self.MotorRight.Forward(speedRight)
 
 
-	def Right(self, speed = 100):
-		self.MotorLeft.Forward(speed)
-		self.MotorRight.Backward(speed)
+	def Right(self, speed = 2):
+		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Forward(speedLeft)
+		self.MotorRight.Backward(speedRight)
 
 
 	def Stop(self, speed = 0):
-		self.MotorLeft.Stop(speed)
-		self.MotorRight.Stop(speed)
+		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Stop(speedLeft)
+		self.MotorRight.Stop(speedRight)
 
 
-	def Break(self, speed = 100):
-		self.MotorLeft.Break(speed)
-		self.MotorRight.Break(speed)
+	def Break(self, speed = 5):
+		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Break(speedLeft)
+		self.MotorRight.Break(speedRight)
 
 
 	def Exit(self):
 		GPIO.cleanup()
-		print "Exit"
