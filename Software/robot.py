@@ -187,7 +187,7 @@ class Robot():
 		wallFront = True
 		wallRight = True
 
-		gap = self.TileSize - 2.0
+		gap = self.TileSize/3 * 2
 
 		if sonarLeft > gap:
 			wallLeft = False

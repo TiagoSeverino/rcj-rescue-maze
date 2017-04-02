@@ -1,6 +1,7 @@
 from robot import Robot
-
 from arena.tiles import *
+import pdb
+
 
 class MazeRunners():
 
@@ -13,7 +14,13 @@ class MazeRunners():
 	x = startX
 	y = startY
 
-	Direction = 1
+	Direction = 0
+
+	IsAutonomous = True
+	GoInitial = False
+
+	IsDebugging = False
+
 
 	def __init__(self):
 		self.robot = Robot()
@@ -33,21 +40,232 @@ class MazeRunners():
 		self.RegisterWalls()
 
 		while True:
-			self.MoveNextTile()
+			if self.IsAutonomous:
+				if self.IsDebugging:
+					pdb.set_trace()
+				if self.GoInitial:
+					self.MovePath(TileType.Starting)
+				else:
+					if self.NearVoidTile():
+						self.RotateNextTile()
+					else:
+						self.MovePath(TileType.Void)
+			else:
+				self.robot.Break()
+				print "Maze Solved!"
+				break
 
-	def MoveNextTile(self):
-		(wallLeft, wallFront, wallRight) = self.robot.GetWalls()
+	def MovePath(self, tileType):
 
-		if wallLeft == False:
-			self.RotateLeft()
+		pdb.set_trace()
+
+		floodFill = FloodFill(self.mapWidth, self.mapHeight)
+		floodFill.AddTile(self.x, self.y, 0, 0)
+
+		TileFound = False
+
+		lastTile = floodFill.GetFloodAt(0)[0]
+
+		i = 0
+
+		while not TileFound:
+
+			cFlood = floodFill.GetFloodAt(i)
+
+			if len(cFlood) > 0:
+				for floodTile in cFlood:
+					if (tileType == TileType.Starting and floodTile.x == self.startX and floodTile.x == self.startY) or (self.map[floodTile.x, floodTile.y].tileType == tileType):
+						TileFound = True
+						lastTile = floodTile
+						break
+
+					Left = True if (self.map[floodTile.x - 1, floodTile.y].rightWall == Wall.No and (floodFill.tile[floodTile.x - 1][floodTile.y] == None or floodFill.tile[floodTile.x - 1][floodTile.y].i > i)) else False
+					Right = True if (self.map[floodTile.x, floodTile.y].rightWall == Wall.No and (floodFill.tile[floodTile.x + 1][floodTile.y] == None or floodFill.tile[floodTile.x + 1][floodTile.y].i > i)) else False
+					Bottom = True if (self.map[floodTile.x, floodTile.y].bottomWall == Wall.No and (floodFill.tile[floodTile.x][floodTile.y + 1] == None or floodFill.tile[floodTile.x][floodTile.y + 1].i > i)) else False
+					Top = True if (self.map[floodTile.x, floodTile.y - 1].bottomWall == Wall.No and (floodFill.tile[floodTile.x][floodTile.y - 1] == None or floodFill.tile[floodTile.x][floodTile.y - 1].i > i)) else False
+					
+					
+					if Bottom:
+						if self.map[floodTile.x, floodTile.y + 1].tileType != TileType.Black:
+							floodFill.AddTile(floodTile.x, floodTile.y + 1, i + 1, floodTile.id)
+
+					if Right:
+						if self.map[floodTile.x + 1, floodTile.y].tileType != TileType.Black:
+							floodFill.AddTile(floodTile.x + 1, floodTile.y, i + 1, floodTile.id)
+
+					if Left:
+						if self.map[floodTile.x - 1, floodTile.y].tileType != TileType.Black:
+							floodFill.AddTile(floodTile.x - 1, floodTile.y, i + 1, floodTile.id)
+
+					if Top:
+						if self.map[floodTile.x, floodTile.y - 1].tileType != TileType.Black:
+							floodFill.AddTile(floodTile.x, floodTile.y - 1, i + 1, floodTile.id)
+
+					lastTile = floodTile
+
+					i += 1
+
+			else:
+				self.GoInitial = True
+				return
+			
+		path = []
+
+		originalLastTile = lastTile
+
+		for i in range(floodFill.LastTileNumber):
+
+			lastTile = originalLastTile
+			
+			while lastTile.i > i:
+
+				for floodTile in floodFill.GetFloodAt(lastTile.i - 1):
+					if floodTile.id == lastTile.parentID:
+						lastTile = floodTile
+						break
+
+			path.append(lastTile)
+
+
+		for floodTile in path:
+			self.MoveNextTile(floodTile)
+
+		if tileType == TileType.Starting and x == StartingX and y == StartingY:
+			self.IsAutonomous = false
+
+
+	def NearVoidTile(self):
+		nextVoidWalls = NextVoidTiles(True if self.map[self.x - 1, self.y].rightWall == Wall.Yes else False, True if self.map[self.x, self.y].rightWall == Wall.Yes else False, True if self.map[self.x, self.y - 1].bottomWall == Wall.Yes else False, True if self.map[self.x, self.y].bottomWall == Wall.Yes else False)
+		nextVoidTiles = NextVoidTiles(True if self.map[self.x - 1, self.y].tileType == TileType.Void else False	, True if self.map[self.x + 1, self.y].tileType == TileType.Void else False, True if self.map[self.x, self.y - 1].tileType == TileType.Void else False, True if self.map[self.x, self.y + 1].tileType == TileType.Void else False)
+
+		if (nextVoidWalls.Left == False and nextVoidTiles.Left):
+			return True
+
+		if (nextVoidWalls.Right == False and nextVoidTiles.Right):
+			return True
+
+		if (nextVoidWalls.Up == False and nextVoidTiles.Up):
+			return True
+
+		if (nextVoidWalls.Down == False and nextVoidTiles.Down):
+			return True
+
+		return False
+
+	def RotateNextTile(self):
+		nextVoidWalls = NextVoidTiles(self.map[self.x - 1, self.y].rightWall == Wall.Yes, self.map[self.x, self.y].rightWall == Wall.Yes, self.map[self.x, self.y - 1].bottomWall == Wall.Yes, self.map[self.x, self.y].bottomWall == Wall.Yes)
+		nextVoidTiles = NextVoidTiles(self.map[self.x - 1, self.y].tileType == TileType.Void, self.map[self.x + 1, self.y].tileType == TileType.Void, self.map[self.x, self.y - 1].tileType == TileType.Void, self.map[self.x, self.y + 1].tileType == TileType.Void)
+
+		if nextVoidWalls.Down == False and nextVoidTiles.Down:
+				if self.Direction == Direction.Up:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Left:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Right:
+					self.RotateRight()
+
+				self.MoveTile()
+
+				return
+
+		if nextVoidWalls.Right == False and nextVoidTiles.Right:
+			if self.Direction == Direction.Left:
+				self.RotateLeft()
+
+			if self.Direction == Direction.Bottom:
+				self.RotateLeft()
+
+			if self.Direction == Direction.Up:
+				self.RotateRight()
+
 			self.MoveTile()
-		elif wallFront == False:
+
+			return
+
+		if nextVoidWalls.Left == False and nextVoidTiles.Left:
+			if self.Direction == Direction.Right:
+				self.RotateLeft()
+
+			if self.Direction == Direction.Up:
+				self.RotateLeft()
+
+			if self.Direction == Direction.Bottom:
+				self.RotateRight()
+
 			self.MoveTile()
-		elif wallRight == False:
-			self.RotateRight()
+
+			return
+
+		if nextVoidWalls.Up == False and nextVoidTiles.Up:
+			if self.Direction == Direction.Bottom:
+				self.RotateLeft()
+
+			if self.Direction == Direction.Right:
+				self.RotateLeft()
+
+			if self.Direction == Direction.Left:
+				self.RotateRight()
+
 			self.MoveTile()
-		elif wallFront:
-			self.RotateLeft()
+
+			return
+
+
+	def MoveNextTile(self, lastTile):
+
+			if lastTile.x < self.x:
+
+				if self.Direction == Direction.Right:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Up:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Bottom:
+					self.RotateRight()
+
+			self.MoveTile()
+
+			if lastTile.x > self.x:
+
+				if self.Direction == Direction.Left:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Up:
+					self.RotateRight()
+
+				if self.Direction == Direction.Bottom:
+					self.RotateLeft()
+
+				self.MoveTile()
+
+			if lastTile.y < self.y:
+
+				if self.Direction == Direction.Bottom:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Left:
+					self.RotateRight()
+
+				if self.Direction == Direction.Right:
+					self.RotateLeft()
+
+				self.MoveTile()
+
+			if lastTile.y > self.y:
+
+				if self.Direction == Direction.Up:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Left:
+					self.RotateLeft()
+
+				if self.Direction == Direction.Right:
+					self.RotateRight()
+
+				self.MoveTile()
 
 	"""
 	### Movement
@@ -78,6 +296,8 @@ class MazeRunners():
 		else:
 			self.Direction = 3
 
+		self.PrintMap()
+
 		print "Rotated Left!"
 
 	def RotateRight(self):
@@ -87,6 +307,8 @@ class MazeRunners():
 			self.Direction += 1
 		else:
 			self.Direction = 0
+
+		self.PrintMap()
 
 		print "Rotated Right!"
 
@@ -100,8 +322,6 @@ class MazeRunners():
 	def RegisterWalls(self):
 
 		walls = self.robot.GetWalls()
-
-		print walls
 
 		if self.Direction == Direction.Up:
 			self.RegisterWallsFromTop(walls)
@@ -143,29 +363,50 @@ class MazeRunners():
 		self.map[self.x - 1, self.y].rightWall = Wall.Yes if wallRight else Wall.No
 
 	def PrintMap(self):
-		for y in range(self.mapHeight):
+		y = 0
+		while y < self.mapHeight:
 			line = ""
-			for x in range(self.mapWidth):
-				if self.map[x, y].bottomWall == Wall.Yes:
-					line += "_"
+			line2 = ""
+			x = 0
+			while x < self.mapWidth:
+				if self.map[x, y].tileType == TileType.Black:
+					tileType = "B"
 				else:
-					line += " "
-				if self.map[x, y].rightWall == Wall.Yes:
+					tileType = " "
+				if x == self.x and y == self.y:
+					if self.Direction == Direction.Up:
+						tileType = "^" + tileType
+					elif self.Direction == Direction.Right:
+						tileType = ">" + tileType
+					elif self.Direction == Direction.Left:
+						tileType = "<" + tileType
+					else:
+						tileType = "v" + tileType
+					tileType = "o" + tileType
+				else:
+					tileType += tileType + tileType
+				line += (tileType)
+				line2 += "___" if (self.map[x, y].bottomWall == Wall.Yes and x != 0) else "   "
+				if self.map[x, y].rightWall == Wall.Yes and y != 0:
 					line += "|"
+					line2 += "|"
 				else:
 					line += " "
-			print line
+					if self.map[x, y].bottomWall == Wall.Yes and x != 0:
+						line2 += "_"
+					else:
+						line2 += " "
+				x += 1
+			if y > 0:
+				print line
+			print line2
+			y += 1
 
 	def Exit(self):
 		self.robot.Exit()
 
 
-try:
-	maze = MazeRunners()
-	maze.Start()
-except:
-	maze.PrintMap()
-	maze.Exit()
 
-	
-	
+maze = MazeRunners()
+maze.Start()
+maze.Exit()
