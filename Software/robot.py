@@ -1,5 +1,6 @@
 import time
 import RPi.GPIO as GPIO
+from arena.tiles import *
 
 from sensor.l298n import L298N
 from sensor.srf04 import SRF04
@@ -60,7 +61,7 @@ class Robot():
 		self.MotorRight = L298N(self.motorRight[0], self.motorRight[1], self.motorRight[2])
 
 		#Register Position
-		self.CompassOffset = self.compass.bearing3599()
+		self.CompassOffset = self.compass.bearing255()
 
 	"""
 	### Functions
@@ -74,15 +75,21 @@ class Robot():
 		else:
 			finalTile = 0
 
-		positionGap = 0.25 #Margin For Robot To Stop in Center of Tile
-		frontDistance = (self.TileSize / 2) - 7.0
+		positionGap = 0.5 #Margin For Robot To Stop in Center of Tile
+		frontDistance = (self.TileSize / 2) - 7.5
 
 		while True:
 
 			(tile, distance) = self.GetTile(self.GetSonar())
 
 			if tile > finalTile:
-				self.Forward()
+				tileLeft, distanceLeft = self.GetTile(self.GetSonar("left"))
+				tileRight, distanceRight = self.GetTile(self.GetSonar("right"))
+
+				if tileLeft > tileRight:
+					self.Forward2(60, 80)
+				else:
+					self.Forward2(80, 60)
 			elif tile < finalTile:
 				self.Backward()
 			else:
@@ -99,6 +106,11 @@ class Robot():
 
 					break
 
+		if tile == 0:
+			return False
+		else:
+			return True
+
 	def GetTile(self, distance):
 		tile = 0
 
@@ -109,67 +121,75 @@ class Robot():
 		return (tile, distance)
 
 	def RotateLeft(self):
-
-		if self.Direction == 1:
-			self.Rotate(0)
-		elif self.Direction == 2:
-			self.Rotate(1)
-		elif self.Direction == 3:
-			self.Rotate(2)
-		elif self.Direction == 0:
-			self.Rotate(3)
+		self.Left(5)
+		time.sleep(3)
 
 	def RotateRight(self):
+		self.Right(5)
+		time.sleep(3)
+
+	def RotateLeft1(self):
+
+		if self.Direction == Direction.Up:
+			self.Rotate(Direction.Left)
+		elif self.Direction == Direction.Right:
+			self.Rotate(Direction.Up)
+		elif self.Direction == Direction.Bottom:
+			self.Rotate(Direction.Right)
+		elif self.Direction == Direction.Left:
+			self.Rotate(Direction.Bottom)
+
+	def RotateRight1(self):
 		
-		if self.Direction == 1:
-			self.Rotate(2)
-		elif self.Direction == 2:
-			self.Rotate(3)
-		elif self.Direction == 3:
-			self.Rotate(0)
-		elif self.Direction == 0:
-			self.Rotate(1)
+		if self.Direction == Direction.Up:
+			self.Rotate(Direction.Right)
+		elif self.Direction == Direction.Right:
+			self.Rotate(Direction.Bottom)
+		elif self.Direction == Direction.Bottom:
+			self.Rotate(Direction.Left)
+		elif self.Direction == Direction.Left:
+			self.Rotate(Direction.Up)
 
-	def Rotate(self, position, loop = True, margin = 1):
+	def Rotate(self, position, loop = True, margin = 2):
 
-		rotateSpeed = 2
+		rotateSpeed = 3
 
 		while True:
 			
 			direction = self.GetBearing()
 			
 
-			if position == 0: ### Rotate To Direction 0
-				if direction < 360.0 - margin and direction >= 180.0:
+			if position == Direction.Up:
+				if direction < 255.0 - margin and direction >= 180.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 0 + margin and direction <= 180.0:
+				elif direction > 0.0 + margin and direction <= 180.0:
 					self.Left(speed = rotateSpeed)
 				else:
-					self.Direction = 0
+					self.Direction = Direction.Up
 					break
-			elif position == 1: ### Rotate To Direction 1
-				if direction < 70 - margin or direction >= 270.0:
+			elif position == Direction.Right:
+				if direction < 64.0 - margin or direction >= 270.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 70 + margin and direction <= 270.0:
+				elif direction > 64.0 + margin and direction <= 270.0:
 					self.Left(speed = rotateSpeed)
 				else:
-					self.Direction = 1
+					self.Direction = Direction.Right
 					break
-			elif position == 2: ### Rotate To Direction 2
-				if direction < 190 - margin:
+			elif position == Direction.Bottom:
+				if direction < 127.0 - margin:
 					self.Right(speed = rotateSpeed)
-				elif direction > 190.0 + margin:
+				elif direction > 127.0 + margin:
 					self.Left(speed = rotateSpeed)
 				else:
-					self.Direction = 2
+					self.Direction = Direction.Bottom
 					break
-			else: ### Rotate To Direction 3
-				if direction < 290.0 - margin and direction >= 90.0:
+			else:
+				if direction < 191.0 - margin and direction >= 90.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 290.0 + margin or direction <= 90.0:
+				elif direction > 191.0 + margin or direction <= 90.0:
 					self.Left(speed = rotateSpeed)
 				else:
-					self.Direction = 3
+					self.Direction = Direction.Left
 					break
 			
 			if loop == False:
@@ -187,7 +207,7 @@ class Robot():
 		wallFront = True
 		wallRight = True
 
-		gap = self.TileSize/3 * 2
+		gap = self.TileSize/6 * 5
 
 		if sonarLeft > gap:
 			wallLeft = False
@@ -206,14 +226,14 @@ class Robot():
 	"""
 
 	def GetBearing(self):
-		bearing = self.compass.bearing3599()
+		bearing = self.compass.bearing255()
 
 		bearing -= self.CompassOffset
 
-		if bearing > 360.0:
-			bearing -= 360.0
+		if bearing > 255.0:
+			bearing -= 255.0
 		elif bearing < 0.0:
-			bearing += 360.0
+			bearing += 255.0
 
 		return bearing
 
@@ -259,13 +279,16 @@ class Robot():
 
 		return (mLeft, mRight)
 
-	def Forward(self, speed = 3):
+	def Forward(self, speed = 2):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
 		self.MotorLeft.Forward(speedLeft)
 		self.MotorRight.Forward(speedRight)
 
+	def Forward2(self, speedLeft, speedRight):
+		self.MotorLeft.Forward(speedLeft)
+		self.MotorRight.Forward(speedRight)
 
-	def Backward(self, speed = 3):
+	def Backward(self, speed = 2):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
 		self.MotorLeft.Backward(speedLeft)
 		self.MotorRight.Backward(speedRight)
