@@ -36,7 +36,7 @@ class Robot():
 
 	#Vars
 	TileSize = 30.0
-	Direction = 0 # Compass Direction: 0, North; 1, East; 2, South; 3, West
+	Direction = Direction.Up
 
 	def __init__(self):
 
@@ -76,7 +76,7 @@ class Robot():
 			finalTile = 0
 
 		positionGap = 0.5 #Margin For Robot To Stop in Center of Tile
-		frontDistance = (self.TileSize / 2) - 7.5
+		frontDistance = (self.TileSize / 2) - 6.5
 
 		while True:
 
@@ -86,10 +86,11 @@ class Robot():
 				tileLeft, distanceLeft = self.GetTile(self.GetSonar("left"))
 				tileRight, distanceRight = self.GetTile(self.GetSonar("right"))
 
-				if tileLeft > tileRight:
-					self.Forward2(60, 80)
+				if distanceLeft > distanceRight:
+					self.Forward2(40, 60)
 				else:
-					self.Forward2(80, 60)
+					self.Forward2(60, 40)
+
 			elif tile < finalTile:
 				self.Backward()
 			else:
@@ -106,11 +107,6 @@ class Robot():
 
 					break
 
-		if tile == 0:
-			return False
-		else:
-			return True
-
 	def GetTile(self, distance):
 		tile = 0
 
@@ -118,15 +114,22 @@ class Robot():
 			tile += 1
 			distance -= self.TileSize
 
+		if distance > self.TileSize / 3 * 2:
+			tile += 1
+
 		return (tile, distance)
 
 	def RotateLeft(self):
 		self.Left(5)
-		time.sleep(3)
+		time.sleep(0.7)
+		self.Break()
+		self.RotateLeft1()
 
 	def RotateRight(self):
 		self.Right(5)
-		time.sleep(3)
+		time.sleep(0.7)
+		self.Break()
+		self.RotateRight1()
 
 	def RotateLeft1(self):
 
@@ -152,7 +155,7 @@ class Robot():
 
 	def Rotate(self, position, loop = True, margin = 2):
 
-		rotateSpeed = 3
+		rotateSpeed = 2
 
 		while True:
 			
@@ -160,17 +163,17 @@ class Robot():
 			
 
 			if position == Direction.Up:
-				if direction < 255.0 - margin and direction >= 180.0:
+				if direction < 255.0 - margin and direction >= 127.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 0.0 + margin and direction <= 180.0:
+				elif direction > 0.0 + margin and direction <= 127.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = Direction.Up
 					break
 			elif position == Direction.Right:
-				if direction < 64.0 - margin or direction >= 270.0:
+				if direction < 64.0 - margin or direction >= 191.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 64.0 + margin and direction <= 270.0:
+				elif direction > 64.0 + margin and direction <= 191.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = Direction.Right
@@ -184,9 +187,9 @@ class Robot():
 					self.Direction = Direction.Bottom
 					break
 			else:
-				if direction < 191.0 - margin and direction >= 90.0:
+				if direction < 191.0 - margin and direction >= 64.0:
 					self.Right(speed = rotateSpeed)
-				elif direction > 191.0 + margin or direction <= 90.0:
+				elif direction > 191.0 + margin or direction <= 64.0:
 					self.Left(speed = rotateSpeed)
 				else:
 					self.Direction = Direction.Left
@@ -207,7 +210,7 @@ class Robot():
 		wallFront = True
 		wallRight = True
 
-		gap = self.TileSize/6 * 5
+		gap = self.TileSize
 
 		if sonarLeft > gap:
 			wallLeft = False
@@ -262,24 +265,24 @@ class Robot():
 		mRight = 0
 
 		if speed == 1:
-			mLeft = 19
+			mLeft = 20
 			mRight = 20
 		elif speed == 2:
-			mLeft = 35
+			mLeft = 40
 			mRight = 40
 		elif speed == 3:
-			mLeft = 50
+			mLeft = 60
 			mRight = 60
 		elif speed == 4:
-			mLeft = 65
+			mLeft = 80
 			mRight = 80
 		elif speed == 5:
-			mLeft = 80
+			mLeft = 100
 			mRight = 100
 
 		return (mLeft, mRight)
 
-	def Forward(self, speed = 2):
+	def Forward(self, speed = 3):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
 		self.MotorLeft.Forward(speedLeft)
 		self.MotorRight.Forward(speedRight)
@@ -288,7 +291,7 @@ class Robot():
 		self.MotorLeft.Forward(speedLeft)
 		self.MotorRight.Forward(speedRight)
 
-	def Backward(self, speed = 2):
+	def Backward(self, speed = 3):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
 		self.MotorLeft.Backward(speedLeft)
 		self.MotorRight.Backward(speedRight)
