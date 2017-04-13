@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#Pinout Image For Reference
+RPi_Pinout.png
+
 # C extensions
 *.so
 

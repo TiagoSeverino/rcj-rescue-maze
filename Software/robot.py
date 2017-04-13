@@ -6,20 +6,28 @@ from sensor.l298n import L298N
 from sensor.srf04 import SRF04
 from sensor.cmps03 import CMPS03
 from sensor.cmps10 import CMPS10
+from sensor.kitDropper import KitDropper
+from sensor.cameraServo import CameraServo
 
 class Robot():
 
-	#CMPS03
+	#Kit Dropper Pin
+	KitDropperPin = 16
+
+	#Camera Servo Pin
+	CameraServoPin = 18
+
+	#CMPS03 I2C Adress
 	CMPS03_Addr = 0x60
 
-	#CMPS10
+	#CMPS10 I2C Adress
 	CMPS10_Addr = 0x61
 
-	#MLX90614
+	#MLX90614 I2C Adress
 	LeftThermometerAddr = 0x5a
 	RightThermometerAddr = 0x2a
 
-	#SRF04
+	#SRF04 Pins
 	LeftSonarTRIG = 19
 	LeftSonarECHO = 11
 
@@ -62,6 +70,12 @@ class Robot():
 
 		#Register Position
 		self.CompassOffset = self.compass.bearing255()
+
+		#Kit Dropper Setup
+		self.KitDropper = KitDropper(self.KitDropperPin)
+
+		#Camera Servo Setup
+		self.cameraSevo = CameraServo(self.CameraServoPin)
 
 	"""
 	### Functions
@@ -133,29 +147,33 @@ class Robot():
 
 	def RotateLeft1(self):
 
+		FinalDirection = Direction.Up
+
 		if self.Direction == Direction.Up:
-			self.Rotate(Direction.Left)
+			self.FinalDirection = Direction.Left
 		elif self.Direction == Direction.Right:
-			self.Rotate(Direction.Up)
+			self.FinalDirection = Direction.Up
 		elif self.Direction == Direction.Bottom:
-			self.Rotate(Direction.Right)
+			self.FinalDirection = Direction.Right
 		elif self.Direction == Direction.Left:
-			self.Rotate(Direction.Bottom)
+			self.FinalDirection = Direction.Bottom
+
+		self.Rotate(FinalDirection)
 
 	def RotateRight1(self):
 		
 		if self.Direction == Direction.Up:
-			self.Rotate(Direction.Right)
+			self.FinalDirection = Direction.Right
 		elif self.Direction == Direction.Right:
-			self.Rotate(Direction.Bottom)
+			self.FinalDirection = Direction.Bottom
 		elif self.Direction == Direction.Bottom:
-			self.Rotate(Direction.Left)
+			self.FinalDirection = Direction.Left
 		elif self.Direction == Direction.Left:
-			self.Rotate(Direction.Up)
+			self.FinalDirection = Direction.Up
 
-	def Rotate(self, position, loop = True, margin = 2):
+	def Rotate(self, position, loop = True, margin = 4):
 
-		rotateSpeed = 2
+		rotateSpeed = 3
 
 		while True:
 			

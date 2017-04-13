@@ -3,14 +3,14 @@ import RPi.GPIO as GPIO
 
 class CameraServo():
 
-    LeftPos = 9
-    FrontPos = 6
-    RightPos = 3
+    LeftPos = 12
+    FrontPos = 7.5
+    RightPos = 3    
 
     #Positions: 0 -> Left, 1-> Front, 2 -> Right
     LastPos = 1
 
-    Time90Deg = 0.25
+    Time90Deg = 0.75
 
     def __init__(self, pin):
         self.pin = pin
@@ -40,12 +40,12 @@ class CameraServo():
 
         elif position == 1:
 
-            self.Servo.ChangeDutyCycle(self.LeftPos)
+            self.Servo.ChangeDutyCycle(self.FrontPos)
             self.LastPos = 1
 
         elif position == 2:
 
-            self.Servo.ChangeDutyCycle(self.LeftPos)
+            self.Servo.ChangeDutyCycle(self.RightPos)
             self.LastPos = 2
 
             if self.LastPos == 0:
