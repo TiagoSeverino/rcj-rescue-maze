@@ -2,23 +2,22 @@ import time
 import RPi.GPIO as GPIO
 from arena.tiles import *
 
-from sensor.l298n import L298N
-from sensor.srf04 import SRF04
-from sensor.cmps03 import CMPS03
-from sensor.cmps10 import CMPS10
-from sensor.kitDropper import KitDropper
-from sensor.cameraServo import CameraServo
+from sensor.l298n import *
+from sensor.srf04 import *
+from sensor.cmps03 import *
+from sensor.cmps10 import *
+from sensor.kitDropper import *
+from sensor.cameraServo import *
+
+import pdb
 
 class Robot():
 
 	#Kit Dropper Pin
-	KitDropperPin = 16
+	KitDropperPin = 12
 
 	#Camera Servo Pin
-	CameraServoPin = 18
-
-	#CMPS03 I2C Adress
-	CMPS03_Addr = 0x60
+	CameraServoPin = 16
 
 	#CMPS10 I2C Adress
 	CMPS10_Addr = 0x61
@@ -28,14 +27,20 @@ class Robot():
 	RightThermometerAddr = 0x2a
 
 	#SRF04 Pins
-	LeftSonarTRIG = 19
-	LeftSonarECHO = 11
+	BackLeftSonarTRIG = 31
+	BackLeftSonarECHO = 32
 
-	FrontSonarTRIG = 21
-	FrontSonarECHO = 13
+	FrontLeftSonarTRIG = 29
+	FrontLeftSonarECHO = 26
 
-	RightSonarTRIG = 23
-	RightSonarECHO = 15
+	FrontSonarTRIG = 23
+	FrontSonarECHO = 24
+
+	FrontRightSonarTRIG = 21
+	FrontRightSonarECHO = 22
+
+	BackRightSonarTRIG = 19
+	BackRightSonarECHO = 18
 
 
 	#Pin1, Pin2, PWM
@@ -44,32 +49,30 @@ class Robot():
 
 	#Vars
 	TileSize = 30.0
-	Direction = Direction.Up
+
+	FrontGap = 0.2 #Margin For Robot To Stop in Center of Tile
+	FrontDistance = 9.25
 
 	def __init__(self):
 
 		GPIO.setwarnings(False)
 		GPIO.setmode(GPIO.BOARD)
 
-		#Compass Setup
-		self.compass = CMPS03(self.CMPS03_Addr)
-
 		#Tilt Compensated Compass Setup
-		self.tiltCompass = CMPS10(self.CMPS10_Addr)
+		self.Compass = CMPS10(self.CMPS10_Addr)
 
 		#Sonar Setup
 		self.sonar = []
 		
-		self.sonar.append(SRF04(self.LeftSonarTRIG, self.LeftSonarECHO))
+		self.sonar.append(SRF04(self.BackLeftSonarTRIG, self.BackLeftSonarECHO))
+		self.sonar.append(SRF04(self.FrontLeftSonarTRIG, self.FrontLeftSonarECHO))
 		self.sonar.append(SRF04(self.FrontSonarTRIG, self.FrontSonarECHO)) 
-		self.sonar.append(SRF04(self.RightSonarTRIG, self.RightSonarECHO))
+		self.sonar.append(SRF04(self.FrontRightSonarTRIG, self.FrontRightSonarECHO))
+		self.sonar.append(SRF04(self.BackRightSonarTRIG, self.BackRightSonarECHO))
 
 		#Motors Setup
 		self.MotorLeft = L298N(self.motorLeft[0], self.motorLeft[1], self.motorLeft[2])
 		self.MotorRight = L298N(self.motorRight[0], self.motorRight[1], self.motorRight[2])
-
-		#Register Position
-		self.CompassOffset = self.compass.bearing255()
 
 		#Kit Dropper Setup
 		self.KitDropper = KitDropper(self.KitDropperPin)
@@ -81,43 +84,33 @@ class Robot():
 	### Functions
 	"""
 
-	def MoveTile(self):
-		(tile, distance) = self.GetTile(self.GetSonar())
+	def MoveTile(self, Ammount = 1, speed = 3):
+		(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
 
 		if tile > 0:
-			finalTile = tile - 1
+			finalTile = tile - Ammount
 		else:
 			finalTile = 0
 
-		positionGap = 0.5 #Margin For Robot To Stop in Center of Tile
-		frontDistance = (self.TileSize / 2) - 6.5
-
 		while True:
 
-			(tile, distance) = self.GetTile(self.GetSonar())
+			(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
 
 			if tile > finalTile:
-				tileLeft, distanceLeft = self.GetTile(self.GetSonar("left"))
-				tileRight, distanceRight = self.GetTile(self.GetSonar("right"))
-
-				if distanceLeft > distanceRight:
-					self.Forward2(40, 60)
-				else:
-					self.Forward2(60, 40)
-
+				self.Forward(speed)
 			elif tile < finalTile:
-				self.Backward()
+				self.Backward(speed)
 			else:
-				if distance < frontDistance - positionGap:
+				if distance < self.FrontDistance - self.FrontGap:
 					self.Backward()
-				elif distance > frontDistance + positionGap:
+				elif distance > self.FrontDistance + self.FrontGap:
 					self.Forward()
 				else:
-					self.Break()
+					self.Break(speed)
 					
-					time.sleep(0.5)
+					#time.sleep(0.5)
 
-					self.Rotate(self.Direction)
+					self.AlignToWall()
 
 					break
 
@@ -135,94 +128,93 @@ class Robot():
 
 	def RotateLeft(self):
 		self.Left(5)
-		time.sleep(0.7)
+		time.sleep(0.6)
 		self.Break()
-		self.RotateLeft1()
+
+		self.AlignToWall()
 
 	def RotateRight(self):
 		self.Right(5)
-		time.sleep(0.7)
+		time.sleep(0.6)
 		self.Break()
-		self.RotateRight1()
 
-	def RotateLeft1(self):
+		self.AlignToWall()
 
-		FinalDirection = Direction.Up
+	def AlignToWall(self):
 
-		if self.Direction == Direction.Up:
-			self.FinalDirection = Direction.Left
-		elif self.Direction == Direction.Right:
-			self.FinalDirection = Direction.Up
-		elif self.Direction == Direction.Bottom:
-			self.FinalDirection = Direction.Right
-		elif self.Direction == Direction.Left:
-			self.FinalDirection = Direction.Bottom
+		speed = 1
+		useLeft = False
+		useRight = False
 
-		self.Rotate(FinalDirection)
+		gap = 0.2
 
-	def RotateRight1(self):
-		
-		if self.Direction == Direction.Up:
-			self.FinalDirection = Direction.Right
-		elif self.Direction == Direction.Right:
-			self.FinalDirection = Direction.Bottom
-		elif self.Direction == Direction.Bottom:
-			self.FinalDirection = Direction.Left
-		elif self.Direction == Direction.Left:
-			self.FinalDirection = Direction.Up
+		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
 
-	def Rotate(self, position, loop = True, margin = 4):
+		(backLeftTile, backLeftDist) = self.GetTile(backLeft)
+		(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
 
-		rotateSpeed = 3
+		(frontTile, frontDist) =  self.GetTile(frontLeft)
+
+		(backRightTile, backRightDist) = self.GetTile(backRight)
+		(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+
+		if frontLeftTile == backLeftTile:
+			useLeft = True
+
+		if frontRightTile == backRightTile:
+			useRight = True
+
+		if useLeft and useRight:
+			if backLeftTile > backRightTile:
+				useLeft = False
+			elif backLeftTile < backRightTile:
+				useRight = False
 
 		while True:
-			
-			direction = self.GetBearing()
-			
 
-			if position == Direction.Up:
-				if direction < 255.0 - margin and direction >= 127.0:
-					self.Right(speed = rotateSpeed)
-				elif direction > 0.0 + margin and direction <= 127.0:
-					self.Left(speed = rotateSpeed)
-				else:
-					self.Direction = Direction.Up
-					break
-			elif position == Direction.Right:
-				if direction < 64.0 - margin or direction >= 191.0:
-					self.Right(speed = rotateSpeed)
-				elif direction > 64.0 + margin and direction <= 191.0:
-					self.Left(speed = rotateSpeed)
-				else:
-					self.Direction = Direction.Right
-					break
-			elif position == Direction.Bottom:
-				if direction < 127.0 - margin:
-					self.Right(speed = rotateSpeed)
-				elif direction > 127.0 + margin:
-					self.Left(speed = rotateSpeed)
-				else:
-					self.Direction = Direction.Bottom
-					break
-			else:
-				if direction < 191.0 - margin and direction >= 64.0:
-					self.Right(speed = rotateSpeed)
-				elif direction > 191.0 + margin or direction <= 64.0:
-					self.Left(speed = rotateSpeed)
-				else:
-					self.Direction = Direction.Left
+			(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
+
+			(backLeftTile, backLeftDist) = self.GetTile(backLeft)
+			(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
+
+			(frontTile, frontDist) =  self.GetTile(frontLeft)
+
+			(backRightTile, backRightDist) = self.GetTile(backRight)
+			(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+
+			if useLeft:
+				if backLeftDist > frontLeftDist - gap and backLeftDist < frontLeftDist + gap:
 					break
 			
-			if loop == False:
-				break
+			if useRight:
+				if backRightDist > frontRightDist - gap and backRightDist < frontRightDist + gap:
+					break
+
+			if useLeft == useRight:
+				if backLeftDist > frontLeftDist + gap and backRightDist < frontRightDist - gap:
+					self.Right(speed)
+				elif backLeftDist < frontLeftDist - gap and backRightDist > frontRightDist + gap:
+					self.Left(speed)
+				elif backLeftDist > frontLeftDist + gap and backRightDist > frontRightDist + gap:
+					self.Forward(speed)
+				else:
+					self.Backward(speed)
+			elif useLeft:
+				if backLeftDist > frontLeftDist + gap:
+					self.Right(speed)
+				else: #elif backLeftDist < frontLeftDist - gap:
+					self.Left(speed)
+			else:
+				if backRightDist < frontRightDist - gap:
+					self.Right(speed)
+				else: #elif backRightDist > frontRightDist + gap:
+					self.Left(speed)
 
 		self.Break()
-		time.sleep(0.5)
+		#time.sleep(0.5)
 
 	def GetWalls(self):
-		sonarLeft = self.GetSonar("Left")
-		sonarFront = self.GetSonar("Front")
-		sonarRight = self.GetSonar("Right")
+		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
 
 		wallLeft = True
 		wallFront = True
@@ -230,13 +222,13 @@ class Robot():
 
 		gap = self.TileSize
 
-		if sonarLeft > gap:
+		if backLeft > gap and frontLeft > gap:
 			wallLeft = False
 
-		if sonarFront > gap:
+		if front > gap:
 			wallFront = False
 
-		if sonarRight > gap:
+		if backRight > gap and frontRight > gap:
 			wallRight = False
 
 		return (wallLeft, wallFront, wallRight)
@@ -246,31 +238,12 @@ class Robot():
 	### Sensors
 	"""
 
-	def GetBearing(self):
-		bearing = self.compass.bearing255()
+	def GetAllSonar(self):
+		return (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.Front), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
 
-		bearing -= self.CompassOffset
+	def GetSonar(self, sonar = Sonar.Front):
 
-		if bearing > 255.0:
-			bearing -= 255.0
-		elif bearing < 0.0:
-			bearing += 255.0
-
-		return bearing
-
-	def GetSonar(self, direction = "Front"):
-
-		direction = direction.lower()
-		sonarNumber = 0
-
-		if direction == "left":
-			sonarNumber = 0
-		elif direction == "right":
-			sonarNumber = 2
-		else: # Front Sonar
-			sonarNumber = 1
-
-		distance = self.sonar[sonarNumber].getCM()
+		distance = self.sonar[sonar].getCM()
 
 		return distance
 
@@ -302,10 +275,6 @@ class Robot():
 
 	def Forward(self, speed = 3):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
-		self.MotorLeft.Forward(speedLeft)
-		self.MotorRight.Forward(speedRight)
-
-	def Forward2(self, speedLeft, speedRight):
 		self.MotorLeft.Forward(speedLeft)
 		self.MotorRight.Forward(speedRight)
 

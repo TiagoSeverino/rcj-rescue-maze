@@ -2,9 +2,18 @@
 __pycache__/
 *.py[cod]
 *$py.class
+#Visual Studio Config
+Software/.vscode
 
 #Pinout Image For Reference
 RPi_Pinout.png
+
+#Connect Credentials
+connect
+
+#SSH SHA Keys
+RPi-Maze
+*.pub
 
 # C extensions
 *.so

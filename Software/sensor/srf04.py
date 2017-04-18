@@ -31,3 +31,10 @@ class SRF04():
 		time.sleep(0.01)
 
 		return distance
+
+class Sonar:
+	BackLeft = 0
+	FrontLeft = 1
+	Front = 2
+	FrontRight = 3
+	BackRight = 4
