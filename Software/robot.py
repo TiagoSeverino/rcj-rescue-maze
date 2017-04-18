@@ -6,6 +6,7 @@ from sensor.l298n import *
 from sensor.srf04 import *
 from sensor.cmps03 import *
 from sensor.cmps10 import *
+from sensor.mlx90614 import *
 from sensor.kitDropper import *
 from sensor.cameraServo import *
 
@@ -23,8 +24,8 @@ class Robot():
 	CMPS10_Addr = 0x61
 
 	#MLX90614 I2C Adress
-	LeftThermometerAddr = 0x5a
-	RightThermometerAddr = 0x2a
+	LeftThermometerAddr = 0x2a
+	RightThermometerAddr = 0x5a
 
 	#SRF04 Pins
 	BackLeftSonarTRIG = 31
@@ -50,8 +51,8 @@ class Robot():
 	#Vars
 	TileSize = 30.0
 
-	FrontGap = 0.2 #Margin For Robot To Stop in Center of Tile
-	FrontDistance = 9.25
+	FrontGap = 0.3 #Margin For Robot To Stop in Center of Tile
+	FrontDistance = 9.75
 
 	def __init__(self):
 
@@ -80,6 +81,10 @@ class Robot():
 		#Camera Servo Setup
 		self.cameraSevo = CameraServo(self.CameraServoPin)
 
+		#Thermometer Setup		
+		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)		
+		self.thermometerRight = MLX90614(self.RightThermometerAddr)
+
 	"""
 	### Functions
 	"""
@@ -94,21 +99,57 @@ class Robot():
 
 		while True:
 
+			self.IsVictim()
+
 			(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
 
 			if tile > finalTile:
-				self.Forward(speed)
+
+				(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
+
+				(backLeftTile, backLeftDist) = self.GetTile(backLeft)
+				(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
+
+				(frontTile, frontDist) =  self.GetTile(frontLeft)
+
+				(backRightTile, backRightDist) = self.GetTile(backRight)
+				(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+
+				leftDist = (backLeftDist + frontLeftDist)/2
+				rightDist = (backRightDist + frontRightDist)/2
+
+				if leftDist > rightDist:
+					self.Forward1(17, 22)
+				else:
+					self.Forward1(23, 20)
+				
 			elif tile < finalTile:
 				self.Backward(speed)
 			else:
 				if distance < self.FrontDistance - self.FrontGap:
 					self.Backward()
 				elif distance > self.FrontDistance + self.FrontGap:
-					self.Forward()
+					(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
+
+					(backLeftTile, backLeftDist) = self.GetTile(backLeft)
+					(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
+
+					(frontTile, frontDist) =  self.GetTile(frontLeft)
+
+					(backRightTile, backRightDist) = self.GetTile(backRight)
+					(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+
+					leftDist = (backLeftDist + frontLeftDist)/2
+					rightDist = (backRightDist + frontRightDist)/2
+
+					if leftDist > rightDist:
+						self.Forward1(15, 25)
+					else:
+						self.Forward1(25, 25)
 				else:
 					self.Break(speed)
 					
-					#time.sleep(0.5)
+					time.sleep(0.5)
 
 					self.AlignToWall()
 
@@ -142,7 +183,7 @@ class Robot():
 
 	def AlignToWall(self):
 
-		speed = 1
+		speed = 2
 		useLeft = False
 		useRight = False
 
@@ -211,7 +252,7 @@ class Robot():
 					self.Left(speed)
 
 		self.Break()
-		#time.sleep(0.5)
+		time.sleep(0.5)
 
 	def GetWalls(self):
 		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
@@ -233,6 +274,59 @@ class Robot():
 
 		return (wallLeft, wallFront, wallRight)
 
+
+	def DropKit(self, ammount=1):
+		self.Break()
+		time.sleep(0.5)
+		self.KitDropper.drop(ammount)
+		time.sleep(0.5)
+
+	def GetPich(self):
+		pich = self.compass.pich()
+		print "Pich: ", pich		
+		return pich
+
+	def GetRoll(self):
+		roll = self.compass.roll()
+		print "Roll: ", roll		
+		return roll
+
+	def GetTemperatureLeft(self):
+		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
+		time.sleep(0.00001)
+		self.objTempLeft = self.thermometerLeft.get_obj_temp()		
+
+		return (self.ambTempLeft, self.objTempLeft)
+
+
+	def GetTemperatureRight(self):
+		self.ambTempRight = self.thermometerRight.get_amb_temp()
+		time.sleep(0.00001)
+		self.objTempRight = self.thermometerRight.get_obj_temp()		
+
+		return (self.ambTempRight, self.objTempRight)
+
+	def IsVictim(self):
+		tempGap = 5.0
+
+		(ambLeft, objLeft) = self.GetTemperatureLeft()
+
+		time.sleep(0.00001)
+
+		(ambRight, objRight) = self.GetTemperatureRight()
+
+		if (objLeft - ambLeft) > tempGap:
+			self.RotateRight()
+			self.DropKit()
+			self.RotateLeft()
+
+		if (objRight - ambRight) > tempGap:
+			self.RotateLeft()
+			self.DropKit()
+			self.RotateRight()
+
+		if (objLeft - ambLeft) > tempGap or (objRight - ambRight) > tempGap:
+			print "Victim Detected!"
 
 	"""
 	### Sensors
@@ -256,25 +350,29 @@ class Robot():
 		mRight = 0
 
 		if speed == 1:
-			mLeft = 20
-			mRight = 20
+			mLeft = 15
+			mRight = 21
 		elif speed == 2:
-			mLeft = 40
+			mLeft = 30
 			mRight = 40
 		elif speed == 3:
-			mLeft = 60
-			mRight = 60
+			mLeft = 43
+			mRight = 64
 		elif speed == 4:
-			mLeft = 80
+			mLeft = 49
 			mRight = 80
 		elif speed == 5:
-			mLeft = 100
+			mLeft = 65
 			mRight = 100
 
 		return (mLeft, mRight)
 
 	def Forward(self, speed = 3):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Forward(speedLeft)
+		self.MotorRight.Forward(speedRight)
+
+	def Forward1(self, speedLeft, speedRight):
 		self.MotorLeft.Forward(speedLeft)
 		self.MotorRight.Forward(speedRight)
 
