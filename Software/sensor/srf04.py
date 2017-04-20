@@ -18,6 +18,7 @@ class SRF04():
 		time.sleep(0.00001)
 		GPIO.output(self.trig, False)
 		start = time.time()
+		stop = start
 
 		while GPIO.input(self.echo)==0:
 			start = time.time()

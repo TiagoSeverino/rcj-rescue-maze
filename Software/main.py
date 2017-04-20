@@ -48,11 +48,12 @@ class MazeRunners():
 			if self.IsAutonomous:
 				if self.IsDebugging:
 					pdb.set_trace()
+				if self.NearVoidTile():
+					self.RotateNextTile()
 				else:
-					if self.NearVoidTile():
-						self.RotateNextTile()
-					else:
-						self.MovePath(TileType.Void)
+					self.MovePath(TileType.Void)
+				self.RegisterWalls()
+				self.RegisterTile()
 		print "Moving to initial tile"
 		self.MovePath(TileType.Starting)
 		print "Maze Solved!"
@@ -114,7 +115,7 @@ class MazeRunners():
 
 		originalLastTile = lastTile
 
-		for i in xrange(0, floodFill.LastTileNumber):
+		for i in range(0, floodFill.LastTileNumber + 1):
 
 			lastTile = originalLastTile
 			
@@ -133,6 +134,7 @@ class MazeRunners():
 
 		if tileType == TileType.Starting and self.x == self.startX and self.y == self.startY:
 			self.IsAutonomous = False
+			self.PrintMap()
 
 
 	def NearVoidTile(self):
@@ -216,57 +218,57 @@ class MazeRunners():
 
 	def MoveNextTile(self, lastTile):
 
-			if lastTile.x < self.x:
+		if lastTile.x < self.x:
 
-				if self.direction == Direction.Right:
-					self.RotateLeft()
+			if self.direction == Direction.Right:
+				self.RotateLeft()
 
-				if self.direction == Direction.Up:
-					self.RotateLeft()
+			if self.direction == Direction.Up:
+				self.RotateLeft()
 
-				if self.direction == Direction.Bottom:
-					self.RotateRight()
+			if self.direction == Direction.Bottom:
+				self.RotateRight()
 
-				self.MoveTile()
+			self.MoveTile()
 
-			if lastTile.x > self.x:
+		if lastTile.x > self.x:
 
-				if self.direction == Direction.Left:
-					self.RotateLeft()
+			if self.direction == Direction.Left:
+				self.RotateLeft()
 
-				if self.direction == Direction.Up:
-					self.RotateRight()
+			if self.direction == Direction.Up:
+				self.RotateRight()
 
-				if self.direction == Direction.Bottom:
-					self.RotateLeft()
+			if self.direction == Direction.Bottom:
+				self.RotateLeft()
 
-				self.MoveTile()
+			self.MoveTile()
 
-			if lastTile.y < self.y:
+		if lastTile.y < self.y:
 
-				if self.direction == Direction.Bottom:
-					self.RotateLeft()
+			if self.direction == Direction.Bottom:
+				self.RotateLeft()
 
-				if self.direction == Direction.Left:
-					self.RotateRight()
+			if self.direction == Direction.Left:
+				self.RotateRight()
 
-				if self.direction == Direction.Right:
-					self.RotateLeft()
+			if self.direction == Direction.Right:
+				self.RotateLeft()
 
-				self.MoveTile()
+			self.MoveTile()
 
-			if lastTile.y > self.y:
+		if lastTile.y > self.y:
 
-				if self.direction == Direction.Up:
-					self.RotateLeft()
+			if self.direction == Direction.Up:
+				self.RotateLeft()
 
-				if self.direction == Direction.Left:
-					self.RotateLeft()
+			if self.direction == Direction.Left:
+				self.RotateLeft()
 
-				if self.direction == Direction.Right:
-					self.RotateRight()
+			if self.direction == Direction.Right:
+				self.RotateRight()
 
-				self.MoveTile()
+			self.MoveTile()
 
 	"""
 	### Movement
@@ -284,9 +286,6 @@ class MazeRunners():
 			self.y += 1
 		else:
 			self.x -= 1
-
-		self.RegisterWalls()
-		self.RegisterTile()
 
 	def RotateLeft(self):
 		self.robot.RotateLeft()

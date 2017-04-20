@@ -51,7 +51,7 @@ class Robot():
 	#Vars
 	TileSize = 30.0
 
-	FrontGap = 0.3 #Margin For Robot To Stop in Center of Tile
+	FrontGap = 0.4 #Margin For Robot To Stop in Center of Tile
 	FrontDistance = 9.75
 
 	def __init__(self):
@@ -60,7 +60,7 @@ class Robot():
 		GPIO.setmode(GPIO.BOARD)
 
 		#Tilt Compensated Compass Setup
-		self.Compass = CMPS10(self.CMPS10_Addr)
+		self.compass = CMPS10(self.CMPS10_Addr)
 
 		#Sonar Setup
 		self.sonar = []
@@ -89,7 +89,7 @@ class Robot():
 	### Functions
 	"""
 
-	def MoveTile(self, Ammount = 1, speed = 3):
+	def MoveTile(self, Ammount = 1):
 		(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
 
 		if tile > 0:
@@ -112,38 +112,54 @@ class Robot():
 			leftDist = (backLeftDist + frontLeftDist)/2
 			rightDist = (backRightDist + frontRightDist)/2
 
-			if tile > finalTile:
+			inclination = self.GetPich()
 
+			if inclination > 5 and inclination < 40:
+				finalTile = 0
 				if leftDist > rightDist:
-					self.Forward1(17, 22)
+					self.Forward1(30, 60)
 				else:
-					self.Forward1(23, 20)
-				
-			elif tile < finalTile:
+					self.Forward1(55, 40)
+			elif inclination > 220 and inclination < 250:
+				finalTile = 0
 				if leftDist > rightDist:
-					self.Backward1(17, 22)
+					self.Forward1(16, 29)
 				else:
-					self.Backward1(23, 20)
+					self.Forward1(26, 19)
 			else:
-				if distance < self.FrontDistance - self.FrontGap:
-					if leftDist > rightDist:
-						self.Backward1(15, 25)
-					else:
-						self.Backward1(25, 25)
-				elif distance > self.FrontDistance + self.FrontGap:
+
+				if tile > finalTile:
 
 					if leftDist > rightDist:
-						self.Forward1(15, 25)
+						self.Forward1(30, 50)
 					else:
-						self.Forward1(25, 25)
-				else:
-					self.Break(speed)
+						self.Forward1(40, 35)
 					
-					time.sleep(0.1)
+				elif tile < finalTile:
+					if leftDist > rightDist:
+						self.Backward1(16, 24)
+					else:
+						self.Backward1(16, 19)
+				else:
+					if distance < self.FrontDistance - self.FrontGap:
+						if leftDist > rightDist:
+							self.Backward1(35, 50)
+						else:
+							self.Backward1(45, 35)
+					elif distance > self.FrontDistance + self.FrontGap:
 
-					self.AlignToWall()
+						if leftDist > rightDist:
+							self.Forward1(16, 24)
+						else:
+							self.Forward1(16, 19)
+					else:
+						self.Break()
+						
+						time.sleep(0.1)
 
-					break
+						self.AlignToWall()
+
+						break
 
 	def GetTile(self, distance):
 		tile = 0
@@ -152,21 +168,18 @@ class Robot():
 			tile += 1
 			distance -= self.TileSize
 
-		if distance > self.TileSize / 5 * 4:
-			tile += 1
-
 		return (tile, distance)
 
 	def RotateLeft(self):
 		self.Left(5)
-		time.sleep(0.7)
+		time.sleep(0.75)
 		self.Break()
 
 		self.AlignToWall()
 
 	def RotateRight(self):
 		self.Right(5)
-		time.sleep(0.7)
+		time.sleep(0.75)
 		self.Break()
 
 		self.AlignToWall()
@@ -179,12 +192,10 @@ class Robot():
 
 		gap = 0.2
 
-		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
+		(backLeft, frontLeft, frontRight, backRight) = (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
 
 		(backLeftTile, backLeftDist) = self.GetTile(backLeft)
 		(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
-
-		(frontTile, frontDist) =  self.GetTile(front)
 
 		(backRightTile, backRightDist) = self.GetTile(backRight)
 		(frontRightTile, frontRightDist) = self.GetTile(frontRight)
@@ -203,15 +214,24 @@ class Robot():
 
 		while True:
 
-			(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
+			if useLeft == useRight:
+				(backLeft, frontLeft, frontRight, backRight) = (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
 
-			(backLeftTile, backLeftDist) = self.GetTile(backLeft)
-			(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
+				(backLeftTile, backLeftDist) = self.GetTile(backLeft)
+				(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
 
-			(frontTile, frontDist) =  self.GetTile(front)
+				(backRightTile, backRightDist) = self.GetTile(backRight)
+				(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+			elif useLeft:
+				(backLeft, frontLeft) = (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft))
 
-			(backRightTile, backRightDist) = self.GetTile(backRight)
-			(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+				(backLeftTile, backLeftDist) = self.GetTile(backLeft)
+				(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
+			else:
+				(frontRight, backRight) = (self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
+
+				(backRightTile, backRightDist) = self.GetTile(backRight)
+				(frontRightTile, frontRightDist) = self.GetTile(frontRight)
 
 			if useLeft:
 				if backLeftDist > frontLeftDist - gap and backLeftDist < frontLeftDist + gap:
@@ -247,20 +267,20 @@ class Robot():
 	def GetWalls(self):
 		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
 
-		wallLeft = True
-		wallFront = True
-		wallRight = True
+		wallLeft = False
+		wallFront = False
+		wallRight = False
 
 		gap = self.TileSize
 
-		if backLeft > gap and frontLeft > gap:
-			wallLeft = False
+		if backLeft < gap or frontLeft < gap:
+			wallLeft = True
 
-		if front > gap:
-			wallFront = False
+		if front < gap:
+			wallFront = True
 
-		if backRight > gap and frontRight > gap:
-			wallRight = False
+		if backRight < gap or frontRight < gap:
+			wallRight = True
 
 		return (wallLeft, wallFront, wallRight)
 
@@ -333,19 +353,19 @@ class Robot():
 		mRight = 0
 
 		if speed == 1:
-			mLeft = 15
+			mLeft = 17
 			mRight = 21
 		elif speed == 2:
 			mLeft = 30
 			mRight = 40
 		elif speed == 3:
 			mLeft = 43
-			mRight = 64
+			mRight = 60
 		elif speed == 4:
-			mLeft = 49
+			mLeft = 60
 			mRight = 80
 		elif speed == 5:
-			mLeft = 65
+			mLeft = 78
 			mRight = 100
 
 		return (mLeft, mRight)
