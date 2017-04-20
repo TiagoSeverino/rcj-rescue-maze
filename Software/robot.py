@@ -359,8 +359,12 @@ class Robot():
 		self.MotorLeft.Forward(speedLeft)
 		self.MotorRight.Forward(speedRight)
 
-	def Backward(self, speed = 3):
+	def Backward(self, speed = 2):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
+		self.MotorLeft.Backward(speedLeft)
+		self.MotorRight.Backward(speedRight)
+
+	def Backward1(self, speedLeft, speedRight):
 		self.MotorLeft.Backward(speedLeft)
 		self.MotorRight.Backward(speedRight)
 

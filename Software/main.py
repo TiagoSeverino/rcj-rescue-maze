@@ -42,21 +42,20 @@ class MazeRunners():
 		self.RegisterWalls()
 
 		while True:
+			if self.GoInitial:
+				break
+
 			if self.IsAutonomous:
 				if self.IsDebugging:
 					pdb.set_trace()
-				if self.GoInitial:
-					print "Moving to initial tile"
-					self.MovePath(TileType.Starting)
 				else:
 					if self.NearVoidTile():
 						self.RotateNextTile()
 					else:
 						self.MovePath(TileType.Void)
-			else:
-				self.robot.Break()
-				print "Maze Solved!"
-				break
+		print "Moving to initial tile"
+		self.MovePath(TileType.Starting)
+		print "Maze Solved!"
 
 	def MovePath(self, tileType):
 
@@ -115,7 +114,7 @@ class MazeRunners():
 
 		originalLastTile = lastTile
 
-		for i in xrange(1, floodFill.LastTileNumber):
+		for i in xrange(0, floodFill.LastTileNumber):
 
 			lastTile = originalLastTile
 			
@@ -363,7 +362,9 @@ class MazeRunners():
 			x = 0
 			while x < self.mapWidth:
 				if self.map[x, y].tileType == TileType.Black:
-					tileType = "█"
+					tileType = "x"
+				elif self.map[x, y].tileType == TileType.Void:
+					tileType = ":"
 				else:
 					tileType = " "
 				if x == self.x and y == self.y:
