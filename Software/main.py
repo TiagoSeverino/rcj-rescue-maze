@@ -363,7 +363,7 @@ class MazeRunners():
 			x = 0
 			while x < self.mapWidth:
 				if self.map[x, y].tileType == TileType.Black:
-					tileType = "B"
+					tileType = "█"
 				else:
 					tileType = " "
 				if x == self.x and y == self.y:

@@ -99,24 +99,20 @@ class Robot():
 
 		while True:
 
-			self.IsVictim()
+			(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
 
-			(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
+			(backLeftTile, backLeftDist) = self.GetTile(backLeft)
+			(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
+
+			(tile, distance) =  self.GetTile(front)
+
+			(backRightTile, backRightDist) = self.GetTile(backRight)
+			(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+
+			leftDist = (backLeftDist + frontLeftDist)/2
+			rightDist = (backRightDist + frontRightDist)/2
 
 			if tile > finalTile:
-
-				(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
-
-				(backLeftTile, backLeftDist) = self.GetTile(backLeft)
-				(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
-
-				(frontTile, frontDist) =  self.GetTile(frontLeft)
-
-				(backRightTile, backRightDist) = self.GetTile(backRight)
-				(frontRightTile, frontRightDist) = self.GetTile(frontRight)
-
-				leftDist = (backLeftDist + frontLeftDist)/2
-				rightDist = (backRightDist + frontRightDist)/2
 
 				if leftDist > rightDist:
 					self.Forward1(17, 22)
@@ -124,23 +120,17 @@ class Robot():
 					self.Forward1(23, 20)
 				
 			elif tile < finalTile:
-				self.Backward(speed)
+				if leftDist > rightDist:
+					self.Backward1(17, 22)
+				else:
+					self.Backward1(23, 20)
 			else:
 				if distance < self.FrontDistance - self.FrontGap:
-					self.Backward()
+					if leftDist > rightDist:
+						self.Backward1(15, 25)
+					else:
+						self.Backward1(25, 25)
 				elif distance > self.FrontDistance + self.FrontGap:
-					(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
-
-					(backLeftTile, backLeftDist) = self.GetTile(backLeft)
-					(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
-
-					(frontTile, frontDist) =  self.GetTile(frontLeft)
-
-					(backRightTile, backRightDist) = self.GetTile(backRight)
-					(frontRightTile, frontRightDist) = self.GetTile(frontRight)
-
-					leftDist = (backLeftDist + frontLeftDist)/2
-					rightDist = (backRightDist + frontRightDist)/2
 
 					if leftDist > rightDist:
 						self.Forward1(15, 25)
@@ -149,7 +139,7 @@ class Robot():
 				else:
 					self.Break(speed)
 					
-					time.sleep(0.5)
+					time.sleep(0.1)
 
 					self.AlignToWall()
 
@@ -162,21 +152,21 @@ class Robot():
 			tile += 1
 			distance -= self.TileSize
 
-		if distance > self.TileSize / 3 * 2:
+		if distance > self.TileSize / 5 * 4:
 			tile += 1
 
 		return (tile, distance)
 
 	def RotateLeft(self):
 		self.Left(5)
-		time.sleep(0.6)
+		time.sleep(0.7)
 		self.Break()
 
 		self.AlignToWall()
 
 	def RotateRight(self):
 		self.Right(5)
-		time.sleep(0.6)
+		time.sleep(0.7)
 		self.Break()
 
 		self.AlignToWall()
@@ -194,7 +184,7 @@ class Robot():
 		(backLeftTile, backLeftDist) = self.GetTile(backLeft)
 		(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
 
-		(frontTile, frontDist) =  self.GetTile(frontLeft)
+		(frontTile, frontDist) =  self.GetTile(front)
 
 		(backRightTile, backRightDist) = self.GetTile(backRight)
 		(frontRightTile, frontRightDist) = self.GetTile(frontRight)
@@ -218,7 +208,7 @@ class Robot():
 			(backLeftTile, backLeftDist) = self.GetTile(backLeft)
 			(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
 
-			(frontTile, frontDist) =  self.GetTile(frontLeft)
+			(frontTile, frontDist) =  self.GetTile(front)
 
 			(backRightTile, backRightDist) = self.GetTile(backRight)
 			(frontRightTile, frontRightDist) = self.GetTile(frontRight)
@@ -252,7 +242,7 @@ class Robot():
 					self.Left(speed)
 
 		self.Break()
-		time.sleep(0.5)
+		time.sleep(0.1)
 
 	def GetWalls(self):
 		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
@@ -277,19 +267,15 @@ class Robot():
 
 	def DropKit(self, ammount=1):
 		self.Break()
-		time.sleep(0.5)
+		time.sleep(0.1)
 		self.KitDropper.drop(ammount)
-		time.sleep(0.5)
+		time.sleep(0.1)
 
 	def GetPich(self):
-		pich = self.compass.pich()
-		print "Pich: ", pich		
-		return pich
+		return self.compass.pich()
 
-	def GetRoll(self):
-		roll = self.compass.roll()
-		print "Roll: ", roll		
-		return roll
+	def GetRoll(self):		
+		return self.compass.roll()
 
 	def GetTemperatureLeft(self):
 		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
@@ -324,9 +310,6 @@ class Robot():
 			self.RotateLeft()
 			self.DropKit()
 			self.RotateRight()
-
-		if (objLeft - ambLeft) > tempGap or (objRight - ambRight) > tempGap:
-			print "Victim Detected!"
 
 	"""
 	### Sensors
