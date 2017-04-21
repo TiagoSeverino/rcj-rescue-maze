@@ -9,7 +9,6 @@ class TileType:
 	White = 1
 	Black = 2
 	Starting = 3
-	Ramp = True
 
 class Wall:
 	Unknown = 0

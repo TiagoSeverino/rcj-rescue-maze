@@ -129,12 +129,8 @@ class MazeRunners():
 			path.append(lastTile)
 
 
-		lastFloodTile = path[0]
-
 		for floodTile in path:
-			if floodTile.ramp == False or lastFloodTile.ramp == False:
-				self.MoveNextTile(floodTile)
-				lastFloodTile = floodTile
+			self.MoveNextTile(floodTile)
 
 		if tileType == TileType.Starting and self.x == self.startX and self.y == self.startY:
 			self.IsAutonomous = False
@@ -282,30 +278,14 @@ class MazeRunners():
 
 		self.robot.MoveTile()
 
-		wallLeft = Wall.Yes
-		wallFront = Wall.No
-		wallRight = Wall.Yes
-		
-		walls = (wallLeft, wallFront, wallRight)
-
-		for i in range(0, 8 if self.robot.ramp else 1):
-
-			if self.direction == Direction.Up:
-				self.y -= 1
-				self.RegisterWallsFromTop(walls)
-			elif  self.direction == Direction.Right:
-				self.x += 1
-				self.RegisterWallsFromRight(walls)
-			elif  self.direction == Direction.Bottom:
-				self.y += 1
-				self.RegisterWallsFromBottom(walls)
-			else:
-				self.x -= 1
-				self.RegisterWallsFromLeft(walls)
-
-			self.RegisterTile(ramp = True)
-
-		self.robot.ramp = False
+		if self.direction == Direction.Up:
+			self.y -= 1
+		elif  self.direction == Direction.Right:
+			self.x += 1
+		elif  self.direction == Direction.Bottom:
+			self.y += 1
+		else:
+			self.x -= 1
 
 	def RotateLeft(self):
 		self.robot.RotateLeft()
@@ -327,11 +307,8 @@ class MazeRunners():
 	### Tile Information
 	"""
 
-	def RegisterTile(self, ramp = False):
+	def RegisterTile(self):
 		self.map[self.x, self.y].tileType = TileType.White
-
-		if ramp:
-			self.map[self.x, self.y].tileType = TileType.Ramp
 
 	def RegisterWalls(self):
 
