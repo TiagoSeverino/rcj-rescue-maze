@@ -97,6 +97,8 @@ class Robot():
 		else:
 			finalTile = 0
 
+		self.ramp = False
+
 		while True:
 
 			(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
@@ -116,11 +118,13 @@ class Robot():
 
 			if inclination > 5 and inclination < 40:
 				finalTile = 0
+				self.ramp = True
 				if leftDist > rightDist:
 					self.Forward1(30, 60)
 				else:
 					self.Forward1(55, 40)
 			elif inclination > 220 and inclination < 250:
+				self.ramp = True
 				finalTile = 0
 				if leftDist > rightDist:
 					self.Forward1(16, 29)
@@ -172,14 +176,14 @@ class Robot():
 
 	def RotateLeft(self):
 		self.Left(5)
-		time.sleep(0.75)
+		time.sleep(0.7)
 		self.Break()
 
 		self.AlignToWall()
 
 	def RotateRight(self):
 		self.Right(5)
-		time.sleep(0.75)
+		time.sleep(0.7)
 		self.Break()
 
 		self.AlignToWall()
@@ -299,7 +303,6 @@ class Robot():
 
 	def GetTemperatureLeft(self):
 		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
-		time.sleep(0.00001)
 		self.objTempLeft = self.thermometerLeft.get_obj_temp()		
 
 		return (self.ambTempLeft, self.objTempLeft)
@@ -307,7 +310,6 @@ class Robot():
 
 	def GetTemperatureRight(self):
 		self.ambTempRight = self.thermometerRight.get_amb_temp()
-		time.sleep(0.00001)
 		self.objTempRight = self.thermometerRight.get_obj_temp()		
 
 		return (self.ambTempRight, self.objTempRight)
@@ -316,9 +318,6 @@ class Robot():
 		tempGap = 5.0
 
 		(ambLeft, objLeft) = self.GetTemperatureLeft()
-
-		time.sleep(0.00001)
-
 		(ambRight, objRight) = self.GetTemperatureRight()
 
 		if (objLeft - ambLeft) > tempGap:
