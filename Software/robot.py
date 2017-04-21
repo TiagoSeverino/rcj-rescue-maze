@@ -299,7 +299,6 @@ class Robot():
 
 	def GetTemperatureLeft(self):
 		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
-		time.sleep(0.00001)
 		self.objTempLeft = self.thermometerLeft.get_obj_temp()		
 
 		return (self.ambTempLeft, self.objTempLeft)
@@ -307,7 +306,6 @@ class Robot():
 
 	def GetTemperatureRight(self):
 		self.ambTempRight = self.thermometerRight.get_amb_temp()
-		time.sleep(0.00001)
 		self.objTempRight = self.thermometerRight.get_obj_temp()		
 
 		return (self.ambTempRight, self.objTempRight)
@@ -316,9 +314,6 @@ class Robot():
 		tempGap = 5.0
 
 		(ambLeft, objLeft) = self.GetTemperatureLeft()
-
-		time.sleep(0.00001)
-
 		(ambRight, objRight) = self.GetTemperatureRight()
 
 		if (objLeft - ambLeft) > tempGap:
