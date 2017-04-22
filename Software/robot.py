@@ -92,74 +92,47 @@ class Robot():
 	def MoveTile(self, Ammount = 1):
 		(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
 
-		if tile > 0:
-			finalTile = tile - Ammount
-		else:
-			finalTile = 0
+		finalTile = tile - Ammount
+			
+		gap = 0.1
 
 		while True:
 
-			(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
-
-			(backLeftTile, backLeftDist) = self.GetTile(backLeft)
-			(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
-
-			(tile, distance) =  self.GetTile(front)
-
-			(backRightTile, backRightDist) = self.GetTile(backRight)
-			(frontRightTile, frontRightDist) = self.GetTile(frontRight)
-
-			leftDist = (backLeftDist + frontLeftDist)/2
-			rightDist = (backRightDist + frontRightDist)/2
+			(tile, distance) =  self.GetTile(self.GetSonar(Sonar.Front))
 
 			inclination = self.GetPich()
 
-			if inclination > 5 and inclination < 40:
+			if (inclination > 10 and inclination < 40) or (inclination > 220 and inclination < 245):
 				finalTile = 0
-				if leftDist > rightDist:
-					self.Forward1(30, 60)
+
+			if tile > finalTile or distance > self.FrontDistance + self.FrontGap:
+
+				(frontLeftTile, frontLeftDist) = self.GetTile(self.GetSonar(Sonar.FrontLeft))
+				(frontRightTile, frontRightDist) = self.GetTile(self.GetSonar(Sonar.FrontRight))
+
+				if frontLeftDist > frontRightDist + gap:
+					self.Forward1(70, 100)
+				elif frontLeftDist < frontRightDist - gap:
+					self.Forward1(100, 80)
 				else:
-					self.Forward1(55, 40)
-			elif inclination > 220 and inclination < 250:
-				finalTile = 0
-				if leftDist > rightDist:
-					self.Forward1(16, 29)
+					self.Forward(3)
+				
+			elif tile < finalTile or distance < self.FrontDistance - self.FrontGap:
+
+				(backLeftTile, backLeftDist) = self.GetTile(self.GetSonar(Sonar.BackLeft))
+				(backRightTile, backRightDist) = self.GetTile(self.GetSonar(Sonar.BackRight))
+
+				if backLeftDist > backRightDist + gap:
+					self.Backward1(30, 65)
+				elif backLeftDist < backRightDist - gap:
+					self.Backward1(55, 35)
 				else:
-					self.Forward1(26, 19)
+					self.Backward(3)
 			else:
-
-				if tile > finalTile:
-
-					if leftDist > rightDist:
-						self.Forward1(30, 50)
-					else:
-						self.Forward1(40, 35)
-					
-				elif tile < finalTile:
-					if leftDist > rightDist:
-						self.Backward1(16, 24)
-					else:
-						self.Backward1(16, 19)
-				else:
-					if distance < self.FrontDistance - self.FrontGap:
-						if leftDist > rightDist:
-							self.Backward1(35, 50)
-						else:
-							self.Backward1(45, 35)
-					elif distance > self.FrontDistance + self.FrontGap:
-
-						if leftDist > rightDist:
-							self.Forward1(16, 24)
-						else:
-							self.Forward1(16, 19)
-					else:
-						self.Break()
-						
-						time.sleep(0.1)
-
-						self.AlignToWall()
-
-						break
+				self.Break()
+				time.sleep(0.1)
+				self.AlignToWall()
+				break
 
 	def GetTile(self, distance):
 		tile = 0
