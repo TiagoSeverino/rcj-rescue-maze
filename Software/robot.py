@@ -48,6 +48,11 @@ class Robot():
 	motorLeft = [37, 35, 33] #Motor in Left
 	motorRight = [40, 38, 36] #Motor in Right
 
+	#Self Calibration
+	BearOffSet = 0
+	PichOffSet = 0
+	RollOffSet = 0
+
 	#Vars
 	TileSize = 30.0
 
@@ -89,14 +94,28 @@ class Robot():
 	### Functions
 	"""
 
-	def MoveTile(self, Ammount = 1):
+	def MoveTile(self, Ammount = 1, CheckVictims = True):
 		(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
 
 		finalTile = tile - Ammount
+
+		if finalTile < 0:
+			finalTile = 0
 			
 		gap = 0.1
 
+		CheckVictimLeft = CheckVictims
+		CheckVictimRight = CheckVictims
+
 		while True:
+
+			if CheckVictimLeft:
+				if self.IsVictimLeft():
+					CheckVictimLeft = False
+			
+			if CheckVictimRight:
+				if self.IsVictimRight():
+					CheckVictimRight = False
 
 			(tile, distance) =  self.GetTile(self.GetSonar(Sonar.Front))
 
@@ -163,7 +182,7 @@ class Robot():
 		useLeft = False
 		useRight = False
 
-		gap = 0.2
+		gap = 0.15
 
 		(backLeft, frontLeft, frontRight, backRight) = (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
 
@@ -264,11 +283,82 @@ class Robot():
 		self.KitDropper.drop(ammount)
 		time.sleep(0.1)
 
+	def IsVictimLeft(self):
+		tempGap = 5.0
+
+		(ambLeft, objLeft) = self.GetTemperatureLeft()
+
+		if (objLeft - ambLeft) > tempGap:
+			self.RotateRight()
+			self.DropKit()
+			self.RotateLeft()
+			print "Victim Detected"
+			return True
+		else:
+			return False
+
+	def IsVictimRight(self):
+		tempGap = 5.0
+
+		(ambRight, objRight) = self.GetTemperatureRight()
+
+		if (objRight - ambRight) > tempGap:
+			self.RotateLeft()
+			self.DropKit()
+			self.RotateRight()
+			print "Victim Detected"
+			return True
+		else:
+			return False
+
+	"""
+	### Sensors
+	"""
+
+	def GetAllSonar(self):
+		return (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.Front), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
+
+	def GetSonar(self, sonar = Sonar.Front):
+
+		distance = self.sonar[sonar].getCM()
+
+		return 
+		
+	def GetBear(self):
+		bear = self.compass.bearing255()
+
+		bear -= self.BearOffSet
+ 
+ 		if bear > 255:
+ 			bear -= 255
+ 		elif bear < 0:
+ 			bear += 255
+
+  		return bear
+
 	def GetPich(self):
-		return self.compass.pich()
+		pich = self.compass.pich()
+
+		pich -= self.PichOffSet
+ 
+ 		if pich > 255:
+ 			pich -= 255
+ 		elif pich < 0:
+ 			pich += 255
+
+  		return pich
 
 	def GetRoll(self):		
-		return self.compass.roll()
+		roll = self.compass.roll()
+
+		roll -= self.RollOffSet
+ 
+ 		if roll > 255:
+ 			roll -= 255
+ 		elif roll < 0:
+ 			roll += 255
+
+  		return roll
 
 	def GetTemperatureLeft(self):
 		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
@@ -282,35 +372,6 @@ class Robot():
 		self.objTempRight = self.thermometerRight.get_obj_temp()		
 
 		return (self.ambTempRight, self.objTempRight)
-
-	def IsVictim(self):
-		tempGap = 5.0
-
-		(ambLeft, objLeft) = self.GetTemperatureLeft()
-		(ambRight, objRight) = self.GetTemperatureRight()
-
-		if (objLeft - ambLeft) > tempGap:
-			self.RotateRight()
-			self.DropKit()
-			self.RotateLeft()
-
-		if (objRight - ambRight) > tempGap:
-			self.RotateLeft()
-			self.DropKit()
-			self.RotateRight()
-
-	"""
-	### Sensors
-	"""
-
-	def GetAllSonar(self):
-		return (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.Front), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
-
-	def GetSonar(self, sonar = Sonar.Front):
-
-		distance = self.sonar[sonar].getCM()
-
-		return distance
 
 	"""
 	### Motor Control ###
