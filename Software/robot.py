@@ -8,7 +8,7 @@ from sensor.cmps03 import *
 from sensor.cmps10 import *
 from sensor.mlx90614 import *
 from sensor.kitDropper import *
-from sensor.cameraServo import *
+from sensor.lineSensor import *
 
 import pdb
 
@@ -17,8 +17,8 @@ class Robot():
 	#Kit Dropper Pin
 	KitDropperPin = 12
 
-	#Camera Servo Pin
-	CameraServoPin = 16
+	#Line Sensor Pin
+	LineSensorPin = 16
 
 	#CMPS10 I2C Adress
 	CMPS10_Addr = 0x61
@@ -83,8 +83,8 @@ class Robot():
 		#Kit Dropper Setup
 		self.KitDropper = KitDropper(self.KitDropperPin)
 
-		#Camera Servo Setup
-		self.cameraSevo = CameraServo(self.CameraServoPin)
+		#Line Sensor Setup
+		self.lineSensor = LineSensor(self.LineSensorPin)
 
 		#Thermometer Setup		
 		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)		
@@ -124,7 +124,7 @@ class Robot():
 			if (inclination > 10 and inclination < 40) or (inclination > 220 and inclination < 245):
 				finalTile = 0
 
-			if tile > finalTile or distance > self.FrontDistance + self.FrontGap:
+			if tile > finalTile or (tile == finalTile and distance > self.FrontDistance + self.FrontGap):
 
 				(frontLeftTile, frontLeftDist) = self.GetTile(self.GetSonar(Sonar.FrontLeft))
 				(frontRightTile, frontRightDist) = self.GetTile(self.GetSonar(Sonar.FrontRight))
@@ -136,7 +136,7 @@ class Robot():
 				else:
 					self.Forward(3)
 				
-			elif tile < finalTile or distance < self.FrontDistance - self.FrontGap:
+			elif tile < finalTile or (tile == finalTile and distance < self.FrontDistance - self.FrontGap):
 
 				(backLeftTile, backLeftDist) = self.GetTile(self.GetSonar(Sonar.BackLeft))
 				(backRightTile, backRightDist) = self.GetTile(self.GetSonar(Sonar.BackRight))
@@ -319,10 +319,7 @@ class Robot():
 		return (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.Front), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
 
 	def GetSonar(self, sonar = Sonar.Front):
-
-		distance = self.sonar[sonar].getCM()
-
-		return 
+		return self.sonar[sonar].getCM()
 		
 	def GetBear(self):
 		bear = self.compass.bearing255()
@@ -372,6 +369,12 @@ class Robot():
 		self.objTempRight = self.thermometerRight.get_obj_temp()		
 
 		return (self.ambTempRight, self.objTempRight)
+
+	def GetTileType(self):
+		if self.lineSensor.IsBlackTile():
+			return TileType.Black
+		else:
+			return TileType.White
 
 	"""
 	### Motor Control ###

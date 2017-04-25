@@ -266,18 +266,18 @@ class MazeRunners():
 	### Movement
 	"""
 
-	def MoveTile(self, checkVictims = False):
+	def MoveTile(self, checkVictims = False, ammount = 1):
 
-		self.robot.MoveTile(CheckVictims = checkVictims)
+		self.robot.MoveTile(CheckVictims = checkVictims, Ammount = ammount)
 
 		if self.direction == Direction.Up:
-			self.y -= 1
+			self.y -= ammount
 		elif  self.direction == Direction.Right:
-			self.x += 1
+			self.x += ammount
 		elif  self.direction == Direction.Bottom:
-			self.y += 1
+			self.y += ammount
 		else:
-			self.x -= 1
+			self.x -= ammount
 
 	def RotateLeft(self):
 		self.robot.RotateLeft()
@@ -300,9 +300,12 @@ class MazeRunners():
 	"""
 
 	def RegisterTile(self):
-		self.map[self.x, self.y].tileType = TileType.White
-
 		self.RegisterWalls()
+
+		self.map[self.x, self.y].tileType = self.robot.GetTileType()
+
+		if self.map[self.x, self.y].tileType == TileType.Black:
+			self.MoveTile(ammount = -1)
 
 	def RegisterWalls(self):
 
