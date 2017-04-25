@@ -319,10 +319,7 @@ class Robot():
 		return (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.Front), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
 
 	def GetSonar(self, sonar = Sonar.Front):
-
-		distance = self.sonar[sonar].getCM()
-
-		return 
+		return self.sonar[sonar].getCM()
 		
 	def GetBear(self):
 		bear = self.compass.bearing255()
