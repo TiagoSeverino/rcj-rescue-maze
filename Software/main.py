@@ -46,6 +46,11 @@ class MazeRunners():
 		self.RegisterTile()
 
 	def Start(self):
+		self.robot.RedLed.TurnOn()
+
+		while self.robot.Switch2.IsOn() == False:
+			self.robot.BlueLed.Blink()
+
 		self.ScanFirstTile()
 
 		while True:
@@ -399,5 +404,8 @@ class MazeRunners():
 
 
 maze = MazeRunners()
-maze.Start()
+
+if maze.robot.Switch1.IsOn():
+	maze.Start()
+
 maze.Exit()
