@@ -73,7 +73,7 @@ class Robot():
 	FrontGap = 0.4 #Margin For Robot To Stop in Center of Tile
 	FrontDistance = 9.75
 
-	MinVictimTemp = 35.0
+	MinVictimTemp = 27.5
 	MinTempGap = 7.5
 
 	def __init__(self):
