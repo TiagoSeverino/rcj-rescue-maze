@@ -2,10 +2,12 @@ import time
 import RPi.GPIO as GPIO
 from arena.tiles import *
 
+from sensor.led import *
 from sensor.l298n import *
 from sensor.srf04 import *
 from sensor.cmps03 import *
 from sensor.cmps10 import *
+from sensor.switch import *
 from sensor.mlx90614 import *
 from sensor.kitDropper import *
 from sensor.lineSensor import *
@@ -13,6 +15,18 @@ from sensor.lineSensor import *
 import pdb
 
 class Robot():
+
+	#Switch 1
+	Switch1Pin = 7
+
+	#Switch 2
+	Switch2Pin = 11
+
+	#Blue Led
+	BlueLedPin = 15
+
+	#Red Led
+	RedLedPin = 13
 
 	#Kit Dropper Pin
 	KitDropperPin = 12
@@ -54,11 +68,17 @@ class Robot():
 	RollOffSet = 0
 
 	#Vars
-	TileSize = 30.0
+	TileSize = 31.5
 
 	FrontGap = 0.4 #Margin For Robot To Stop in Center of Tile
-	FrontDistance = 9.75
+	FrontDistance = 10.0
 
+	MinTempGap = 1.0 
+
+	ramp = False
+
+	tile = 0
+	
 	def __init__(self):
 
 		GPIO.setwarnings(False)
@@ -89,6 +109,14 @@ class Robot():
 		#Thermometer Setup		
 		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)		
 		self.thermometerRight = MLX90614(self.RightThermometerAddr)
+
+		#Led Setup
+		self.RedLed = LED(self.RedLedPin)
+		self.BlueLed = LED(self.BlueLedPin)
+
+		#Switch Setup
+		self.Switch1 = SWITCH(self.Switch1Pin)
+		self.Switch2 = SWITCH(self.Switch2Pin)
 
 	"""
 	### Functions
@@ -284,11 +312,11 @@ class Robot():
 		time.sleep(0.1)
 
 	def IsVictimLeft(self):
-		tempGap = 5.0
-
 		(ambLeft, objLeft) = self.GetTemperatureLeft()
 
-		if (objLeft - ambLeft) > tempGap:
+		if ((objLeft - ambLeft) > self.MinTempGap) and objLeft > self.MinVictimTemp:
+			self.BlueLed.Blink(repeat = 25)
+
 			self.RotateRight()
 			self.DropKit()
 			self.RotateLeft()
@@ -298,11 +326,11 @@ class Robot():
 			return False
 
 	def IsVictimRight(self):
-		tempGap = 5.0
-
 		(ambRight, objRight) = self.GetTemperatureRight()
 
-		if (objRight - ambRight) > tempGap:
+		if ((objRight - ambRight) > self.MinTempGap) and objRight > self.MinVictimTemp:
+			self.BlueLed.Blink(repeat = 25)
+
 			self.RotateLeft()
 			self.DropKit()
 			self.RotateRight()
@@ -446,4 +474,6 @@ class Robot():
 
 
 	def Exit(self):
+		self.BlueLed.TurnOff()
+		self.RedLed.TurnOff()
 		GPIO.cleanup()

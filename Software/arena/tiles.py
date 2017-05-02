@@ -3,6 +3,7 @@ class TILE():
 		self.tileType = TileType.Void
 		self.rightWall = Wall.Unknown
 		self.bottomWall = Wall.Unknown
+		self.ramp = False
 
 class TileType:
 	Void = 0
