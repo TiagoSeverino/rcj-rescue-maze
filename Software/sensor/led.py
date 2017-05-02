@@ -3,7 +3,7 @@ import RPi.GPIO as GPIO
 
 class LED():
 
-	BlinkTime = 0.2
+	BlinkTime = 0.1
 
 	def __init__(self, pin):
 		self.pin = pin
@@ -17,7 +17,8 @@ class LED():
 		GPIO.output(self.pin, False)
 
 	def Blink(self, repeat = 10):
-		for i in range(repeat):
+		for i in xrange(repeat):
 			GPIO.output(self.pin, True)
 			time.sleep(self.BlinkTime)
 			GPIO.output(self.pin, False)
+			time.sleep(self.BlinkTime)

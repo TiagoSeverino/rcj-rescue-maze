@@ -194,13 +194,17 @@ class MazeRunners():
 
 			path.append(lastTile)
 
+		lastTile = floodTile
 
 		for floodTile in path:
-			self.MoveNextTile(floodTile)
+			if self.map[floodTile.x, floodTile.y].ramp == False or (self.map[floodTile.x, floodTile.y].ramp == True and self.map[lastTile.x, lastTile.y].ramp == False):
+				self.MoveNextTile(floodTile)
+				self.PrintMap()
+
+			lastTile = floodTile
 
 		if tileType == TileType.Starting and self.x == self.startX and self.y == self.startY:
 			self.IsAutonomous = False
-			self.PrintMap()
 
 
 	def NearVoidTile(self):
@@ -334,14 +338,35 @@ class MazeRunners():
 
 		self.robot.MoveTile(CheckVictims = checkVictims, Ammount = ammount)
 
-		if self.direction == Direction.Up:
-			self.y -= ammount
-		elif  self.direction == Direction.Right:
-			self.x += ammount
-		elif  self.direction == Direction.Bottom:
-			self.y += ammount
-		else:
-			self.x -= ammount
+		if self.robot.ramp == True:
+			ammount = 15
+
+		for i in range(0,ammount):
+			if self.direction == Direction.Up:
+				self.y -= 1
+			elif  self.direction == Direction.Right:
+				self.x += 1
+			elif  self.direction == Direction.Bottom:
+				self.y += 1
+			else:
+				self.x -= 1
+
+			if self.robot.ramp:
+				self.map[self.x, self.y].tileType = TileType.White
+				self.map[self.x, self.y].ramp = True
+
+				walls = (True, False, True)
+
+				if self.direction == Direction.Up:
+					self.RegisterWallsFromTop(walls)
+				elif self.direction == Direction.Left:
+					self.RegisterWallsFromLeft(walls)
+				elif self.direction == Direction.Right:
+					self.RegisterWallsFromRight(walls)
+				else:
+					self.RegisterWallsFromBottom(walls)
+
+		self.robot.ramp = False
 
 	def RotateLeft(self):
 		self.robot.RotateLeft()
@@ -505,7 +530,11 @@ class MazeRunners():
 
 maze = MazeRunners()
 
+time.sleep(1)
+
 if maze.robot.Switch1.IsOn():
 	maze.Start()
+else:
+	print "Button Off"
 
 maze.Exit()

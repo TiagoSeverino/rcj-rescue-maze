@@ -20,13 +20,13 @@ class Robot():
 	Switch1Pin = 7
 
 	#Switch 2
-	Switch1Pin = 11
+	Switch2Pin = 11
 
 	#Blue Led
-	BlueLedPin = 13
+	BlueLedPin = 15
 
 	#Red Led
-	RedLedPin = 15
+	RedLedPin = 13
 
 	#Kit Dropper Pin
 	KitDropperPin = 12
@@ -68,14 +68,17 @@ class Robot():
 	RollOffSet = 0
 
 	#Vars
-	TileSize = 30.0
+	TileSize = 31.5
 
 	FrontGap = 0.4 #Margin For Robot To Stop in Center of Tile
-	FrontDistance = 9.75
+	FrontDistance = 10.0
 
-	MinVictimTemp = 27.5
-	MinTempGap = 7.5
+	MinTempGap = 1.0 
 
+	ramp = False
+
+	tile = 0
+	
 	def __init__(self):
 
 		GPIO.setwarnings(False)

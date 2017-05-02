@@ -9,16 +9,16 @@ class SWITCH():
 		GPIO.setup(self.pin, GPIO.IN)
 
 	def IsOn(self):
-        firstRead = GPIO.input(self.Pin)
+		firstRead = GPIO.input(self.pin)
 		
 		ReadSum = 0
-		count = 50
+		count = 10
 
 		for i in range(count):
-			ReadSum += GPIO.input(self.Pin)
+			ReadSum += GPIO.input(self.pin)
 			time.sleep(0.001)
 
-		if firstRead * 50 == ReadSum:
+		if firstRead * 10 == ReadSum:
 			return True if firstRead == 1 else False
 		else:
 			return self.IsOn()
