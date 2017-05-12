@@ -1,5 +1,5 @@
 # RCJ-Rescue-Maze
-Software used by my team (MazeRunners) in Portuguese-Robotics-Open-2016 Rescue Maze, where we got 6th Place.
+Software used by my team (MazeRunners) in Portuguese Robotics Open 2017 Rescue Maze, where we got 6th Place.
 
 # Demonstration
 <a href="https://www.youtube.com/playlist?list=PLVJpRCJTMOG2sDcqdtvHAAKIqniAQ9S7w" target="_blank"><img src="https://i.ytimg.com/vi/-7PmmGbB83o/hqdefault.jpg" 
