@@ -5,8 +5,8 @@ import pdb
 
 class MazeRunners():
 
-	mapWidth = 10
-	mapHeight = 10
+	mapWidth = 50
+	mapHeight = 50
 
 	startX = mapWidth/2
 	startY = mapHeight/2
@@ -46,10 +46,6 @@ class MazeRunners():
 		self.RegisterTile()
 
 	def Start(self):
-		self.robot.RedLed.TurnOn()
-
-		while self.robot.Switch2.IsOn() == False:
-			self.robot.BlueLed.Blink()
 
 		self.ScanFirstTile()
 
@@ -275,7 +271,6 @@ class MazeRunners():
 
 		self.MoveTile(checkVictims = True)
 
-
 	def MoveNextTile(self, lastTile):
 
 		if lastTile.x < self.x:
@@ -384,7 +379,6 @@ class MazeRunners():
 
 		print "Rotated Right!"
 
-
 	def RotateDirectionBottom(self):
 		if self.direction == Direction.Up:
 			self.RotateLeft()
@@ -438,7 +432,6 @@ class MazeRunners():
 			self.MoveTile(ammount = -1)
 
 	def RegisterWalls(self):
-
 		walls = self.robot.GetWalls()
 
 		if self.direction == Direction.Up:
@@ -526,15 +519,6 @@ class MazeRunners():
 	def Exit(self):
 		self.robot.Exit()
 
-
-
 maze = MazeRunners()
-
-time.sleep(1)
-
-if maze.robot.Switch1.IsOn():
-	maze.Start()
-else:
-	print "Button Off"
-
+maze.Start()
 maze.Exit()

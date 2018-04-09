@@ -3,9 +3,8 @@ import RPi.GPIO as GPIO
 from arena.tiles import *
 
 from sensor.led import *
+from sensor.laser import *
 from sensor.l298n import *
-from sensor.srf04 import *
-from sensor.cmps03 import *
 from sensor.cmps10 import *
 from sensor.switch import *
 from sensor.mlx90614 import *
@@ -15,18 +14,6 @@ from sensor.lineSensor import *
 import pdb
 
 class Robot():
-
-	#Switch 1
-	Switch1Pin = 7
-
-	#Switch 2
-	Switch2Pin = 11
-
-	#Blue Led
-	BlueLedPin = 15
-
-	#Red Led
-	RedLedPin = 13
 
 	#Kit Dropper Pin
 	KitDropperPin = 12
@@ -41,26 +28,9 @@ class Robot():
 	LeftThermometerAddr = 0x2a
 	RightThermometerAddr = 0x5a
 
-	#SRF04 Pins
-	BackLeftSonarTRIG = 31
-	BackLeftSonarECHO = 32
-
-	FrontLeftSonarTRIG = 29
-	FrontLeftSonarECHO = 26
-
-	FrontSonarTRIG = 23
-	FrontSonarECHO = 24
-
-	FrontRightSonarTRIG = 21
-	FrontRightSonarECHO = 22
-
-	BackRightSonarTRIG = 19
-	BackRightSonarECHO = 18
-
-
 	#Pin1, Pin2, PWM
-	motorLeft = [37, 35, 33] #Motor in Left
-	motorRight = [40, 38, 36] #Motor in Right
+	motorLeft = [38, 40, 36] #Motor in Left
+	motorRight = [26, 32, 24] #Motor in Right
 
 	#Self Calibration
 	BearOffSet = 0
@@ -68,12 +38,14 @@ class Robot():
 	RollOffSet = 0
 
 	#Vars
-	TileSize = 31.5
+	TileSize = 30.0
 
-	FrontGap = 0.4 #Margin For Robot To Stop in Center of Tile
-	FrontDistance = 10.0
+	FrontGap = 0.3 #Margin For Robot To Stop in Center of Tile
+	FrontDistance = 9.0
+	AlignGap = 0.5
 
-	MinTempGap = 1.0 
+	MinTempGap = 5.0 
+	MinVictimTemp = 25.0
 
 	ramp = False
 
@@ -87,18 +59,12 @@ class Robot():
 		#Tilt Compensated Compass Setup
 		self.compass = CMPS10(self.CMPS10_Addr)
 
-		#Sonar Setup
-		self.sonar = []
-		
-		self.sonar.append(SRF04(self.BackLeftSonarTRIG, self.BackLeftSonarECHO))
-		self.sonar.append(SRF04(self.FrontLeftSonarTRIG, self.FrontLeftSonarECHO))
-		self.sonar.append(SRF04(self.FrontSonarTRIG, self.FrontSonarECHO)) 
-		self.sonar.append(SRF04(self.FrontRightSonarTRIG, self.FrontRightSonarECHO))
-		self.sonar.append(SRF04(self.BackRightSonarTRIG, self.BackRightSonarECHO))
-
 		#Motors Setup
 		self.MotorLeft = L298N(self.motorLeft[0], self.motorLeft[1], self.motorLeft[2])
 		self.MotorRight = L298N(self.motorRight[0], self.motorRight[1], self.motorRight[2])
+
+		#Lasers Setup
+		self.Lasers = Lasers(7, 11, 13, 15, 19)
 
 		#Kit Dropper Setup
 		self.KitDropper = KitDropper(self.KitDropperPin)
@@ -110,27 +76,19 @@ class Robot():
 		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)		
 		self.thermometerRight = MLX90614(self.RightThermometerAddr)
 
-		#Led Setup
-		self.RedLed = LED(self.RedLedPin)
-		self.BlueLed = LED(self.BlueLedPin)
-
-		#Switch Setup
-		self.Switch1 = SWITCH(self.Switch1Pin)
-		self.Switch2 = SWITCH(self.Switch2Pin)
-
 	"""
 	### Functions
 	"""
 
-	def MoveTile(self, Ammount = 1, CheckVictims = True):
-		(tile, distance) = self.GetTile(self.GetSonar(Sonar.Front))
+	def MoveTile(self, Ammount = 1, CheckVictims = False):
+		(tile, distance) = self.GetTile(self.GetLaser(Laser.Front))
 
 		finalTile = tile - Ammount
 
 		if finalTile < 0:
 			finalTile = 0
 			
-		gap = 0.1
+		gap = 0.4
 
 		CheckVictimLeft = CheckVictims
 		CheckVictimRight = CheckVictims
@@ -145,36 +103,46 @@ class Robot():
 				if self.IsVictimRight():
 					CheckVictimRight = False
 
-			(tile, distance) =  self.GetTile(self.GetSonar(Sonar.Front))
+			(tile, distance) =  self.GetTile(self.GetLaser(Laser.Front))
 
 			inclination = self.GetPich()
 
-			if (inclination > 10 and inclination < 40) or (inclination > 220 and inclination < 245):
+			if (inclination > 10 and inclination < 50) or (inclination > 210 and inclination < 245):
+				self.ramp = True
 				finalTile = 0
 
 			if tile > finalTile or (tile == finalTile and distance > self.FrontDistance + self.FrontGap):
 
-				(frontLeftTile, frontLeftDist) = self.GetTile(self.GetSonar(Sonar.FrontLeft))
-				(frontRightTile, frontRightDist) = self.GetTile(self.GetSonar(Sonar.FrontRight))
+				(frontLeftTile, frontLeftDist) = self.GetTile(self.GetLaser(Laser.FrontLeft))
+				(frontRightTile, frontRightDist) = self.GetTile(self.GetLaser(Laser.FrontRight))
 
 				if frontLeftDist > frontRightDist + gap:
-					self.Forward1(70, 100)
+					if self.ramp == False:
+						self.Forward1(50, 60)
+					else:
+						self.Forward1(70, 85)
 				elif frontLeftDist < frontRightDist - gap:
-					self.Forward1(100, 80)
+					if self.ramp == False:
+						self.Forward1(60, 50)
+					else:
+						self.Forward1(85, 70)
 				else:
-					self.Forward(3)
-				
+					if self.ramp == False:
+						self.Forward(3)
+					else:
+						self.Forward(5)
+
 			elif tile < finalTile or (tile == finalTile and distance < self.FrontDistance - self.FrontGap):
 
-				(backLeftTile, backLeftDist) = self.GetTile(self.GetSonar(Sonar.BackLeft))
-				(backRightTile, backRightDist) = self.GetTile(self.GetSonar(Sonar.BackRight))
+				(backLeftTile, backLeftDist) = self.GetTile(self.GetLaser(Laser.BackLeft))
+				(backRightTile, backRightDist) = self.GetTile(self.GetLaser(Laser.BackRight))
 
 				if backLeftDist > backRightDist + gap:
-					self.Backward1(30, 65)
+					self.Backward1(25, 35)
 				elif backLeftDist < backRightDist - gap:
-					self.Backward1(55, 35)
+					self.Backward1(35, 25)
 				else:
-					self.Backward(3)
+					self.Backward(2)
 			else:
 				self.Break()
 				time.sleep(0.1)
@@ -192,27 +160,25 @@ class Robot():
 
 	def RotateLeft(self):
 		self.Left(5)
-		time.sleep(0.75)
+		time.sleep(0.6)
 		self.Break()
 
 		self.AlignToWall()
 
 	def RotateRight(self):
 		self.Right(5)
-		time.sleep(0.75)
+		time.sleep(0.6)
 		self.Break()
 
 		self.AlignToWall()
 
 	def AlignToWall(self):
 
-		speed = 2
+		speed = 1
 		useLeft = False
 		useRight = False
 
-		gap = 0.15
-
-		(backLeft, frontLeft, frontRight, backRight) = (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
+		(backLeft, frontLeft, frontRight, backRight) = (self.GetLaser(Laser.BackLeft), self.GetLaser(Laser.FrontLeft), self.GetLaser(Laser.FrontRight), self.GetLaser(Laser.BackRight))
 
 		(backLeftTile, backLeftDist) = self.GetTile(backLeft)
 		(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
@@ -233,9 +199,8 @@ class Robot():
 				useRight = False
 
 		while True:
-
 			if useLeft == useRight:
-				(backLeft, frontLeft, frontRight, backRight) = (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
+				(backLeft, frontLeft, frontRight, backRight) = (self.GetLaser(Laser.BackLeft), self.GetLaser(Laser.FrontLeft), self.GetLaser(Laser.FrontRight), self.GetLaser(Laser.BackRight))
 
 				(backLeftTile, backLeftDist) = self.GetTile(backLeft)
 				(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
@@ -243,21 +208,25 @@ class Robot():
 				(backRightTile, backRightDist) = self.GetTile(backRight)
 				(frontRightTile, frontRightDist) = self.GetTile(frontRight)
 			elif useLeft:
-				(backLeft, frontLeft) = (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft))
+				(backLeft, frontLeft) = (self.GetLaser(Laser.BackLeft), self.GetLaser(Laser.FrontLeft))
 
 				(backLeftTile, backLeftDist) = self.GetTile(backLeft)
 				(frontLeftTile, frontLeftDist) = self.GetTile(frontLeft)
 			else:
-				(frontRight, backRight) = (self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
+				(frontRight, backRight) = (self.GetLaser(Laser.FrontRight), self.GetLaser(Laser.BackRight))
 
 				(backRightTile, backRightDist) = self.GetTile(backRight)
-				(frontRightTile, frontRightDist) = self.GetTile(frontRight)
+				(frontRightTile, frontRightDist) = self.GetTile(frontRight) 
+
+			gap = self.AlignGap
 
 			if useLeft:
+				gap = self.AlignGap * (frontLeftTile + 1)
 				if backLeftDist > frontLeftDist - gap and backLeftDist < frontLeftDist + gap:
 					break
 			
 			if useRight:
+				gap *= self.AlignGap * (frontRightTile + 1)
 				if backRightDist > frontRightDist - gap and backRightDist < frontRightDist + gap:
 					break
 
@@ -285,7 +254,7 @@ class Robot():
 		time.sleep(0.1)
 
 	def GetWalls(self):
-		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllSonar()
+		(backLeft, frontLeft, front, frontRight, backRight) = self.GetAllLaser()
 
 		wallLeft = False
 		wallFront = False
@@ -315,8 +284,6 @@ class Robot():
 		(ambLeft, objLeft) = self.GetTemperatureLeft()
 
 		if ((objLeft - ambLeft) > self.MinTempGap) and objLeft > self.MinVictimTemp:
-			self.BlueLed.Blink(repeat = 25)
-
 			self.RotateRight()
 			self.DropKit()
 			self.RotateLeft()
@@ -329,8 +296,6 @@ class Robot():
 		(ambRight, objRight) = self.GetTemperatureRight()
 
 		if ((objRight - ambRight) > self.MinTempGap) and objRight > self.MinVictimTemp:
-			self.BlueLed.Blink(repeat = 25)
-
 			self.RotateLeft()
 			self.DropKit()
 			self.RotateRight()
@@ -343,11 +308,12 @@ class Robot():
 	### Sensors
 	"""
 
-	def GetAllSonar(self):
-		return (self.GetSonar(Sonar.BackLeft), self.GetSonar(Sonar.FrontLeft), self.GetSonar(Sonar.Front), self.GetSonar(Sonar.FrontRight), self.GetSonar(Sonar.BackRight))
+	def GetAllLaser(self):
+		return (self.GetLaser(Laser.BackLeft), self.GetLaser(Laser.FrontLeft), self.GetLaser(Laser.Front), self.GetLaser(Laser.FrontRight), self.GetLaser(Laser.BackRight))
 
-	def GetSonar(self, sonar = Sonar.Front):
-		return self.sonar[sonar].getCM()
+	def GetLaser(self, laser = Laser.Front):
+		distance = self.Lasers.getCM(laser)
+		return distance
 		
 	def GetBear(self):
 		bear = self.compass.bearing255()
@@ -413,19 +379,19 @@ class Robot():
 		mRight = 0
 
 		if speed == 1:
-			mLeft = 17
-			mRight = 21
+			mLeft = 15
+			mRight = 15
 		elif speed == 2:
-			mLeft = 30
+			mLeft = 40
 			mRight = 40
 		elif speed == 3:
-			mLeft = 43
+			mLeft = 60
 			mRight = 60
 		elif speed == 4:
-			mLeft = 60
+			mLeft = 80
 			mRight = 80
 		elif speed == 5:
-			mLeft = 78
+			mLeft = 100
 			mRight = 100
 
 		return (mLeft, mRight)
@@ -449,13 +415,13 @@ class Robot():
 		self.MotorRight.Backward(speedRight)
 
 
-	def Left(self, speed = 2):
+	def Left(self, speed = 4):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
 		self.MotorLeft.Backward(speedLeft)
 		self.MotorRight.Forward(speedRight)
 
 
-	def Right(self, speed = 2):
+	def Right(self, speed = 4):
 		(speedLeft, speedRight) = self.MotorSpeedCalibration(speed)
 		self.MotorLeft.Forward(speedLeft)
 		self.MotorRight.Backward(speedRight)
@@ -474,6 +440,4 @@ class Robot():
 
 
 	def Exit(self):
-		self.BlueLed.TurnOff()
-		self.RedLed.TurnOff()
 		GPIO.cleanup()
