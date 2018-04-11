@@ -3,7 +3,10 @@ import VL53L0X
 import RPi.GPIO as GPIO
 
 class Lasers():
-    range_mode = VL53L0X.VL53L0X_LONG_RANGE_MODE
+    lateral_range_mode = VL53L0X.VL53L0X_GOOD_ACCURACY_MODE
+    front_range_mode = VL53L0X.VL53L0X_LONG_RANGE_MODE
+
+    timing = []
 
     def __init__(self, Xshut1, Xshut2, Xshut3, Xshut4, Xshut5):
         GPIO.setmode(GPIO.BOARD)
@@ -36,16 +39,16 @@ class Lasers():
             print self.XShut[index]
             GPIO.output(self.XShut[index], GPIO.HIGH)
             time.sleep(0.50)
-            self.tof[index].start_ranging(self.range_mode)
+            self.tof[index].start_ranging(self.front_range_mode if (index == Laser.Front) else self.lateral_range_mode)
  
-            self.timing = tof.get_timing()
-            if (self.timing < 20000):
-                self.timing = 20000
-            print ("Laser Timing %d ms" % (self.timing/1000))
+            self.timing[index] = tof[index].get_timing()
+            if (self.timing[index] < 20000):
+                self.timing[index] = 20000
+            print ("Laser Timing %d ms" % (self.timing[index]/1000))
 
     def getCM(self, laserID):
         distance = self.tof[laserID].get_distance()/10.00
-        time.sleep(self.timing/1000000.00/2.00)
+        time.sleep(self.timing[laserID]/1000000.00/2.00)
         return distance
 
 class Laser:
