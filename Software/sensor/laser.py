@@ -32,16 +32,15 @@ class Lasers():
         self.tof.append(VL53L0X.VL53L0X(address=0x2B))
         self.tof.append(VL53L0X.VL53L0X(address=0x2D))
         self.tof.append(VL53L0X.VL53L0X(address=0x2F))
-        self.tof.append(VL53L0X .VL53L0X(address=0x30))
+        self.tof.append(VL53L0X.VL53L0X(address=0x30))
         self.tof.append(VL53L0X.VL53L0X(address=0x32))
 
         for index, tof in enumerate(self.tof):
-            print self.XShut[index]
             GPIO.output(self.XShut[index], GPIO.HIGH)
             time.sleep(0.50)
             self.tof[index].start_ranging(self.front_range_mode if (index == Laser.Front) else self.lateral_range_mode)
- 
-            self.timing[index] = tof[index].get_timing()
+
+            self.timing.append(self.tof[index].get_timing())
             if (self.timing[index] < 20000):
                 self.timing[index] = 20000
             print ("Laser Timing %d ms" % (self.timing[index]/1000))

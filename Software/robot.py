@@ -4,10 +4,10 @@ from arena.tiles import *
 
 from sensor.led import *
 from sensor.laser import *
-from sensor.python-l298n.l298n import *
-from sensor.python-cmps10.cmps10 import *
+from sensor.l298n.l298n import *
+from sensor.cmps10.cmps10 import *
 from sensor.switch import *
-from sensor.python-MLX90614.mlx90614 import *
+from sensor.MLX90614.mlx90614 import *
 from sensor.kitDropper import *
 from sensor.lineSensor import *
 
