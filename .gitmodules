@@ -1,3 +1,12 @@
 [submodule "Software/sensor/VL53L0X_rasp_python"]
 	path = Software/sensor/VL53L0X_rasp_python
 	url = https://github.com/TiagoSeverino/VL53L0X_rasp_python
+[submodule "Software/sensor/python-l298n"]
+	path = Software/sensor/python-l298n
+	url = https://github.com/TiagoSeverino/python-l298n
+[submodule "Software/sensor/python-cmps10"]
+	path = Software/sensor/python-cmps10
+	url = https://github.com/TiagoSeverino/python-cmps10
+[submodule "Software/sensor/python-MLX90614"]
+	path = Software/sensor/python-MLX90614
+	url = https://github.com/TiagoSeverino/python-MLX90614
