@@ -5,8 +5,8 @@ import pdb
 
 class MazeRunners():
 
-	mapWidth = 50
-	mapHeight = 50
+	mapWidth = 12
+	mapHeight = 12
 
 	startX = mapWidth/2
 	startY = mapHeight/2
@@ -38,7 +38,7 @@ class MazeRunners():
 
 		#Setup Robot Positining Vars
 		self.robot.BearOffSet = self.robot.compass.bearing255()
-		self.robot.PichOffSet = self.robot.compass.pich()
+		self.robot.PitchOffSet = self.robot.compass.pitch()
 		self.robot.RollOffSet = self.robot.compass.roll()
 
 		self.RegisterTile()
@@ -92,8 +92,7 @@ class MazeRunners():
 					Right = True if (self.map[floodTile.x, floodTile.y].rightWall == Wall.No and (floodFill.tile[floodTile.x + 1][floodTile.y] == None or floodFill.tile[floodTile.x + 1][floodTile.y].i > i)) else False
 					Bottom = True if (self.map[floodTile.x, floodTile.y].bottomWall == Wall.No and (floodFill.tile[floodTile.x][floodTile.y + 1] == None or floodFill.tile[floodTile.x][floodTile.y + 1].i > i)) else False
 					Top = True if (self.map[floodTile.x, floodTile.y - 1].bottomWall == Wall.No and (floodFill.tile[floodTile.x][floodTile.y - 1] == None or floodFill.tile[floodTile.x][floodTile.y - 1].i > i)) else False
-					
-					
+
 					if self.direction == Direction.Up:
 						if Top:
 							if self.map[floodTile.x, floodTile.y - 1].tileType != TileType.Black:
@@ -138,7 +137,7 @@ class MazeRunners():
 						if Top:
 							if self.map[floodTile.x, floodTile.y - 1].tileType != TileType.Black:
 								floodFill.AddTile(floodTile.x, floodTile.y - 1, i + 1, floodTile.id)
-		
+
 						if Bottom:
 							if self.map[floodTile.x, floodTile.y + 1].tileType != TileType.Black:
 								floodFill.AddTile(floodTile.x, floodTile.y + 1, i + 1, floodTile.id)
@@ -172,7 +171,7 @@ class MazeRunners():
 				return
 
 			i += 1
-			
+
 		path = []
 
 		originalLastTile = lastTile
@@ -180,7 +179,7 @@ class MazeRunners():
 		for i in range(1, floodFill.LastTileNumber + 1):
 
 			lastTile = originalLastTile
-			
+
 			while lastTile.i > i:
 
 				for floodTile in floodFill.GetFloodAt(lastTile.i - 1):
@@ -267,7 +266,7 @@ class MazeRunners():
 			elif nextVoidWalls.Left == False and nextVoidTiles.Left:
 				self.RotateDirectionLeft()
 			elif nextVoidWalls.Down == False and nextVoidTiles.Down:
-				self.RotateDirectionBottom()		
+				self.RotateDirectionBottom()
 
 		self.MoveTile(checkVictims = True)
 

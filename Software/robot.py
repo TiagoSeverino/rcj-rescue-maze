@@ -34,23 +34,23 @@ class Robot():
 
 	#Self Calibration
 	BearOffSet = 0
-	PichOffSet = 0
+	PitchOffSet = 0
 	RollOffSet = 0
 
 	#Vars
 	TileSize = 30.0
 
 	FrontGap = 0.3 #Margin For Robot To Stop in Center of Tile
-	FrontDistance = 9.0
-	AlignGap = 0.5
+	FrontDistance = 8.0
+	AlignGap = 0.15
 
-	MinTempGap = 5.0 
+	MinTempGap = 5.0
 	MinVictimTemp = 25.0
 
 	ramp = False
 
 	tile = 0
-	
+
 	def __init__(self):
 
 		GPIO.setwarnings(False)
@@ -72,8 +72,8 @@ class Robot():
 		#Line Sensor Setup
 		self.lineSensor = LineSensor(self.LineSensorPin)
 
-		#Thermometer Setup		
-		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)		
+		#Thermometer Setup
+		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)
 		self.thermometerRight = MLX90614(self.RightThermometerAddr)
 
 	"""
@@ -87,7 +87,7 @@ class Robot():
 
 		if finalTile < 0:
 			finalTile = 0
-			
+
 		gap = 0.4
 
 		CheckVictimLeft = CheckVictims
@@ -98,14 +98,14 @@ class Robot():
 			if CheckVictimLeft:
 				if self.IsVictimLeft():
 					CheckVictimLeft = False
-			
+
 			if CheckVictimRight:
 				if self.IsVictimRight():
 					CheckVictimRight = False
 
 			(tile, distance) =  self.GetTile(self.GetLaser(Laser.Front))
 
-			inclination = self.GetPich()
+			inclination = self.GetPitch()
 
 			if (inclination > 10 and inclination < 50) or (inclination > 210 and inclination < 245):
 				self.ramp = True
@@ -160,14 +160,14 @@ class Robot():
 
 	def RotateLeft(self):
 		self.Left(5)
-		time.sleep(0.6)
+		time.sleep(0.55)
 		self.Break()
 
 		self.AlignToWall()
 
 	def RotateRight(self):
 		self.Right(5)
-		time.sleep(0.6)
+		time.sleep(0.55)
 		self.Break()
 
 		self.AlignToWall()
@@ -216,7 +216,7 @@ class Robot():
 				(frontRight, backRight) = (self.GetLaser(Laser.FrontRight), self.GetLaser(Laser.BackRight))
 
 				(backRightTile, backRightDist) = self.GetTile(backRight)
-				(frontRightTile, frontRightDist) = self.GetTile(frontRight) 
+				(frontRightTile, frontRightDist) = self.GetTile(frontRight)
 
 			gap = self.AlignGap
 
@@ -224,7 +224,7 @@ class Robot():
 				gap = self.AlignGap * (frontLeftTile + 1)
 				if backLeftDist > frontLeftDist - gap and backLeftDist < frontLeftDist + gap:
 					break
-			
+
 			if useRight:
 				gap *= self.AlignGap * (frontRightTile + 1)
 				if backRightDist > frontRightDist - gap and backRightDist < frontRightDist + gap:
@@ -314,12 +314,12 @@ class Robot():
 	def GetLaser(self, laser = Laser.Front):
 		distance = self.Lasers.getCM(laser)
 		return distance
-		
+
 	def GetBear(self):
 		bear = self.compass.bearing255()
 
 		bear -= self.BearOffSet
- 
+
  		if bear > 255:
  			bear -= 255
  		elif bear < 0:
@@ -327,23 +327,23 @@ class Robot():
 
   		return bear
 
-	def GetPich(self):
-		pich = self.compass.pich()
+	def GetPitch(self):
+		pitch = self.compass.pitch()
 
-		pich -= self.PichOffSet
- 
- 		if pich > 255:
- 			pich -= 255
- 		elif pich < 0:
- 			pich += 255
+		pitch -= self.PitchOffSet
 
-  		return pich
+ 		if pitch > 255:
+ 			pitch -= 255
+ 		elif pitch < 0:
+ 			pitch += 255
 
-	def GetRoll(self):		
+  		return pitch
+
+	def GetRoll(self):
 		roll = self.compass.roll()
 
 		roll -= self.RollOffSet
- 
+
  		if roll > 255:
  			roll -= 255
  		elif roll < 0:
@@ -353,14 +353,14 @@ class Robot():
 
 	def GetTemperatureLeft(self):
 		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
-		self.objTempLeft = self.thermometerLeft.get_obj_temp()		
+		self.objTempLeft = self.thermometerLeft.get_obj_temp()
 
 		return (self.ambTempLeft, self.objTempLeft)
 
 
 	def GetTemperatureRight(self):
 		self.ambTempRight = self.thermometerRight.get_amb_temp()
-		self.objTempRight = self.thermometerRight.get_obj_temp()		
+		self.objTempRight = self.thermometerRight.get_obj_temp()
 
 		return (self.ambTempRight, self.objTempRight)
 
