@@ -10,3 +10,6 @@
 [submodule "Software/sensor/MLX90614"]
 	path = Software/sensor/MLX90614
 	url = https://github.com/TiagoSeverino/python-MLX90614
+[submodule "Software/sensor/tpa81"]
+	path = Software/sensor/tpa81
+	url = https://github.com/TiagoSeverino/python-tpa81
