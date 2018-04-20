@@ -19,7 +19,7 @@ class Robot():
 	KitDropperPin = 18
 
 	#Line Sensor Pin
-	LineSensorPin = 16
+	LineSensorPin = 22
 
 	#CMPS10 I2C Adress
 	CMPS10_Addr = 0x61
