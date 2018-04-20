@@ -16,7 +16,7 @@ import pdb
 class Robot():
 
 	#Kit Dropper Pin
-	KitDropperPin = 12
+	KitDropperPin = 18
 
 	#Line Sensor Pin
 	LineSensorPin = 16
