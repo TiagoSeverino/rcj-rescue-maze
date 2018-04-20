@@ -7,7 +7,7 @@ from sensor.laser import *
 from sensor.l298n.l298n import *
 from sensor.cmps10.cmps10 import *
 from sensor.switch import *
-from sensor.MLX90614.mlx90614 import *
+from sensor.tpa81.tpa81 import *
 from sensor.kitDropper import *
 from sensor.lineSensor import *
 
@@ -24,9 +24,9 @@ class Robot():
 	#CMPS10 I2C Adress
 	CMPS10_Addr = 0x61
 
-	#MLX90614 I2C Adress
-	LeftThermometerAddr = 0x2a
-	RightThermometerAddr = 0x5a
+	#TPA81 I2C Adress
+	LeftThermometerAddr = 0x68
+	RightThermometerAddr = 0x69
 
 	#Pin1, Pin2, PWM
 	motorLeft = [38, 40, 36] #Motor in Left
@@ -73,8 +73,8 @@ class Robot():
 		self.lineSensor = LineSensor(self.LineSensorPin)
 
 		#Thermometer Setup
-		self.thermometerLeft = MLX90614(self.LeftThermometerAddr)
-		self.thermometerRight = MLX90614(self.RightThermometerAddr)
+		self.thermometerLeft = TPA81(self.LeftThermometerAddr)
+		self.thermometerRight = TPA81(self.RightThermometerAddr)
 
 	"""
 	### Functions
@@ -352,15 +352,15 @@ class Robot():
   		return roll
 
 	def GetTemperatureLeft(self):
-		self.ambTempLeft = self.thermometerLeft.get_amb_temp()
-		self.objTempLeft = self.thermometerLeft.get_obj_temp()
+		self.ambTempLeft = self.thermometerLeft.ambientTemperature()
+		self.objTempLeft = self.thermometerLeft.highestTemp()
 
 		return (self.ambTempLeft, self.objTempLeft)
 
 
 	def GetTemperatureRight(self):
-		self.ambTempRight = self.thermometerRight.get_amb_temp()
-		self.objTempRight = self.thermometerRight.get_obj_temp()
+		self.ambTempRight = self.thermometerRight.ambientTemperature()
+		self.objTempRight = self.thermometerRight.highestTemp()
 
 		return (self.ambTempRight, self.objTempRight)
 
