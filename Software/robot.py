@@ -198,7 +198,17 @@ class Robot():
 			elif backLeftTile < backRightTile:
 				useRight = False
 
+		if useLeft == False and useRight == False:
+			useLeft = True
+
+		i = 0
+
 		while True:
+			i += 1
+
+			if i > 60:
+				break
+				
 			if useLeft == useRight:
 				(backLeft, frontLeft, frontRight, backRight) = (self.GetLaser(Laser.BackLeft), self.GetLaser(Laser.FrontLeft), self.GetLaser(Laser.FrontRight), self.GetLaser(Laser.BackRight))
 
