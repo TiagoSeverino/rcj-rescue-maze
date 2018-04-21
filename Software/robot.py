@@ -260,15 +260,15 @@ class Robot():
 		wallFront = False
 		wallRight = False
 
-		gap = self.TileSize
+		gap = self.TileSize / 2
 
-		if backLeft < gap or frontLeft < gap:
+		if backLeft < gap and frontLeft < gap:
 			wallLeft = True
 
 		if front < gap:
 			wallFront = True
 
-		if backRight < gap or frontRight < gap:
+		if backRight < gap and frontRight < gap:
 			wallRight = True
 
 		return (wallLeft, wallFront, wallRight)
