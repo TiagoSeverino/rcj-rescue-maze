@@ -117,17 +117,17 @@ class Robot():
 				(frontRightTile, frontRightDist) = self.GetTile(self.GetLaser(Laser.FrontRight))
 
 				if frontLeftDist > frontRightDist + gap:
-					if self.ramp == False:
-						self.Forward1(50, 60)
+					if self.ramp == False or inclination < 128:
+						self.Forward1(40, 50)
 					else:
-						self.Forward1(70, 85)
+						self.Forward1(70, 100)
 				elif frontLeftDist < frontRightDist - gap:
-					if self.ramp == False:
-						self.Forward1(60, 50)
+					if self.ramp == False or inclination < 128:
+						self.Forward1(50, 40)
 					else:
-						self.Forward1(85, 70)
+						self.Forward1(100, 70)
 				else:
-					if self.ramp == False:
+					if self.ramp == False or inclination < 128:
 						self.Forward(3)
 					else:
 						self.Forward(5)
