@@ -5,8 +5,8 @@ import pdb
 
 class MazeRunners():
 
-	mapWidth = 12
-	mapHeight = 12
+	mapWidth = 40
+	mapHeight = 40
 
 	startX = mapWidth/2
 	startY = mapHeight/2
@@ -335,7 +335,17 @@ class MazeRunners():
 		if self.robot.ramp == True:
 			ammount = 15
 
-		for i in range(0,ammount):
+		if ammount < 0:
+			if self.direction == Direction.Up:
+				self.y -= ammount
+			elif  self.direction == Direction.Right:
+				self.x += ammount
+			elif  self.direction == Direction.Bottom:
+				self.y += ammount
+			else:
+				self.x -= ammount
+
+		for i in range(0, ammount):
 			if self.direction == Direction.Up:
 				self.y -= 1
 			elif  self.direction == Direction.Right:
