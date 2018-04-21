@@ -38,10 +38,10 @@ class Robot():
 	RollOffSet = 0
 
 	#Vars
-	TileSize = 30.0
+	TileSize = 32.5
 
 	FrontGap = 0.3 #Margin For Robot To Stop in Center of Tile
-	FrontDistance = 8.0
+	FrontDistance = 6.5
 	AlignGap = 0.15
 
 	MinTempGap = 5.0
