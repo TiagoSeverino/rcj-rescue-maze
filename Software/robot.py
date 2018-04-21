@@ -389,11 +389,11 @@ class Robot():
 		mRight = 0
 
 		if speed == 1:
-			mLeft = 15
-			mRight = 15
+			mLeft = 20
+			mRight = 18
 		elif speed == 2:
 			mLeft = 40
-			mRight = 40
+			mRight = 41
 		elif speed == 3:
 			mLeft = 60
 			mRight = 60
