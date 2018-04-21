@@ -138,9 +138,9 @@ class Robot():
 				(backRightTile, backRightDist) = self.GetTile(self.GetLaser(Laser.BackRight))
 
 				if backLeftDist > backRightDist + gap:
-					self.Backward1(25, 35)
+					self.Backward1(30, 50)
 				elif backLeftDist < backRightDist - gap:
-					self.Backward1(35, 25)
+					self.Backward1(50, 30)
 				else:
 					self.Backward(2)
 			else:
