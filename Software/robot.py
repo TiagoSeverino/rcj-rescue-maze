@@ -41,11 +41,11 @@ class Robot():
 	TileSize = 32.5
 
 	FrontGap = 0.3 #Margin For Robot To Stop in Center of Tile
-	FrontDistance = 6.5
-	AlignGap = 0.15
+	FrontDistance = 6.25
+	AlignGap = 0.05
 
-	MinTempGap = 5.0
-	MinVictimTemp = 25.0
+	MinTempGap = 4.0
+	MinVictimTemp = 27.5
 
 	ramp = False
 
@@ -83,12 +83,16 @@ class Robot():
 	def MoveTile(self, Ammount = 1, CheckVictims = False):
 		(tile, distance) = self.GetTile(self.GetLaser(Laser.Front))
 
+		if distance >= (self.TileSize - (self.TileSize / 2.5)):
+			tile += 1
+			distance = 0
+
 		finalTile = tile - Ammount
 
 		if finalTile < 0:
 			finalTile = 0
 
-		gap = 0.4
+		gap = 0.05
 
 		CheckVictimLeft = CheckVictims
 		CheckVictimRight = CheckVictims
@@ -270,7 +274,7 @@ class Robot():
 		wallFront = False
 		wallRight = False
 
-		gap = self.TileSize / 2
+		gap = self.TileSize / 1.75
 
 		if backLeft < gap and frontLeft < gap:
 			wallLeft = True
