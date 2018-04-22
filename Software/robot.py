@@ -99,14 +99,6 @@ class Robot():
 
 		while True:
 
-			if CheckVictimLeft:
-				if self.IsVictimLeft():
-					CheckVictimLeft = False
-
-			if CheckVictimRight:
-				if self.IsVictimRight():
-					CheckVictimRight = False
-
 			(tile, distance) =  self.GetTile(self.GetLaser(Laser.Front))
 
 			inclination = self.GetPitch()
@@ -119,6 +111,14 @@ class Robot():
 
 				(frontLeftTile, frontLeftDist) = self.GetTile(self.GetLaser(Laser.FrontLeft))
 				(frontRightTile, frontRightDist) = self.GetTile(self.GetLaser(Laser.FrontRight))
+
+				if CheckVictimLeft and frontLeftTile == 0:
+					if self.IsVictimLeft():
+						CheckVictimLeft = False
+
+				if CheckVictimRight and frontRightTile == 0:
+					if self.IsVictimRight():
+						CheckVictimRight = False
 
 				if frontLeftDist > frontRightDist + gap:
 					if self.ramp == False or inclination < 128:
@@ -140,6 +140,14 @@ class Robot():
 
 				(backLeftTile, backLeftDist) = self.GetTile(self.GetLaser(Laser.BackLeft))
 				(backRightTile, backRightDist) = self.GetTile(self.GetLaser(Laser.BackRight))
+
+				if CheckVictimLeft and backLeftTile == 0:
+					if self.IsVictimLeft():
+						CheckVictimLeft = False
+
+				if CheckVictimRight and backRightTile == 0:
+					if self.IsVictimRight():
+						CheckVictimRight = False
 
 				if backLeftDist > backRightDist + gap:
 					self.Backward1(30, 50)
