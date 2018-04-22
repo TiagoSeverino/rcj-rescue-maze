@@ -48,7 +48,7 @@ class Robot():
 	AlignGap = 0.05
 
 	MinTempGap = 4.0
-	MinVictimTemp = 27.5
+	MinVictimTemp = 26
 
 	#Kit Dropper Settings
 	LeftPos = 1750
@@ -105,9 +105,6 @@ class Robot():
 
 		gap = 0.05
 
-		CheckVictimLeft = CheckVictims
-		CheckVictimRight = CheckVictims
-
 		while True:
 
 			(tile, distance) =  self.GetTile(self.GetLaser(Laser.Front))
@@ -122,14 +119,6 @@ class Robot():
 
 				(frontLeftTile, frontLeftDist) = self.GetTile(self.GetLaser(Laser.FrontLeft))
 				(frontRightTile, frontRightDist) = self.GetTile(self.GetLaser(Laser.FrontRight))
-
-				if CheckVictimLeft and frontLeftTile == 0:
-					if self.IsVictimLeft():
-						CheckVictimLeft = False
-
-				if CheckVictimRight and frontRightTile == 0:
-					if self.IsVictimRight():
-						CheckVictimRight = False
 
 				if frontLeftDist > frontRightDist + gap:
 					if self.ramp == False or inclination < 40 or inclination > 240:
@@ -172,14 +161,6 @@ class Robot():
 				(backLeftTile, backLeftDist) = self.GetTile(self.GetLaser(Laser.BackLeft))
 				(backRightTile, backRightDist) = self.GetTile(self.GetLaser(Laser.BackRight))
 
-				if CheckVictimLeft and backLeftTile == 0:
-					if self.IsVictimLeft():
-						CheckVictimLeft = False
-
-				if CheckVictimRight and backRightTile == 0:
-					if self.IsVictimRight():
-						CheckVictimRight = False
-
 				if backLeftDist > backRightDist + gap:
 					self.Backward1(30, 50)
 				elif backLeftDist < backRightDist - gap:
@@ -190,6 +171,15 @@ class Robot():
 				self.Break()
 				time.sleep(0.1)
 				self.AlignToWall()
+
+				(wallLeft, wallFront, wallRight) = self.GetWalls()
+
+				if CheckVictims and wallLeft:
+					self.IsVictimLeft()
+
+				if CheckVictims and wallRight:
+					self.IsVictimRight()
+
 				break
 
 	def GetTile(self, distance):
