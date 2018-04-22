@@ -124,17 +124,17 @@ class Robot():
 						CheckVictimRight = False
 
 				if frontLeftDist > frontRightDist + gap:
-					if self.ramp == False or inclination < 40:
+					if self.ramp == False or inclination < 40 or inclination > 240:
 						self.Forward1(40, 50)
 					else:
 						self.Forward1(70, 100)
 				elif frontLeftDist < frontRightDist - gap:
-					if self.ramp == False or inclination < 40:
+					if self.ramp == False or inclination < 40 or inclination > 240:
 						self.Forward1(50, 40)
 					else:
 						self.Forward1(100, 70)
 				else:
-					if self.ramp == False or inclination < 40:
+					if self.ramp == False or inclination < 40 or inclination > 240:
 						self.Forward(3)
 					else:
 						self.Forward(5)
