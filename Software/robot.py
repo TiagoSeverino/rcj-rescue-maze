@@ -235,12 +235,12 @@ class Robot():
 			gap = self.AlignGap
 
 			if useLeft:
-				gap = self.AlignGap * (frontLeftTile + 1)
+				gap = self.AlignGap * (frontLeftTile * 1.25 + 1)
 				if backLeftDist > frontLeftDist - gap and backLeftDist < frontLeftDist + gap:
 					break
 
 			if useRight:
-				gap *= self.AlignGap * (frontRightTile + 1)
+				gap *= self.AlignGap * (frontRightTile * 1.25 + 1)
 				if backRightDist > frontRightDist - gap and backRightDist < frontRightDist + gap:
 					break
 
