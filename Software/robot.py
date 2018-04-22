@@ -106,7 +106,7 @@ class Robot():
 
 			inclination = self.GetPitch()
 
-			if (inclination > 10 and inclination < 50) or (inclination > 210 and inclination < 245):
+			if (inclination > 15 and inclination < 40) or (inclination > 215 and inclination < 240):
 				self.ramp = True
 				finalTile = 0
 
@@ -124,17 +124,17 @@ class Robot():
 						CheckVictimRight = False
 
 				if frontLeftDist > frontRightDist + gap:
-					if self.ramp == False or inclination < 128:
+					if self.ramp == False or inclination < 40:
 						self.Forward1(40, 50)
 					else:
 						self.Forward1(70, 100)
 				elif frontLeftDist < frontRightDist - gap:
-					if self.ramp == False or inclination < 128:
+					if self.ramp == False or inclination < 40:
 						self.Forward1(50, 40)
 					else:
 						self.Forward1(100, 70)
 				else:
-					if self.ramp == False or inclination < 128:
+					if self.ramp == False or inclination < 40:
 						self.Forward(3)
 					else:
 						self.Forward(5)
