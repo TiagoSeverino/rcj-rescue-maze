@@ -17,6 +17,10 @@ class Robot():
 	#Kit Dropper Pin
 	KitDropperPin = 24
 
+	#Front Touch Switches
+	LeftSwitch = 16
+	RightSwitch = 12
+
 	#Line Sensor Pin
 	LineSensorPin = 22
 
@@ -79,6 +83,10 @@ class Robot():
 		self.thermometerLeft = TPA81(self.LeftThermometerAddr)
 		self.thermometerRight = TPA81(self.RightThermometerAddr)
 
+		#Touch Switc Setup
+		self.leftSwitch = SWITCH(self.LeftSwitch)
+		self.rightSwitch = SWITCH(self.RightSwitch)
+
 	"""
 	### Functions
 	"""
@@ -138,6 +146,26 @@ class Robot():
 						self.Forward(3)
 					else:
 						self.Forward(5)
+
+				if not self.ramp:
+					if self.leftSwitch.IsOn():
+						self.Backward(2)
+						time.sleep(0.5)
+						self.Right(2)
+						time.sleep(0.5)
+						self.Forward(2)
+						time.sleep(0.5)
+						self.Left(2)
+						time.sleep(0.5)
+					elif self.rightSwitch.IsOn():
+						self.Backward(2)
+						time.sleep(0.5)
+						self.Left(2)
+						time.sleep(0.5)
+						self.Forward(2)
+						time.sleep(0.5)
+						self.Right(2)
+						time.sleep(0.5)
 
 			elif tile < finalTile or (tile == finalTile and distance < self.FrontDistance - self.FrontGap):
 
