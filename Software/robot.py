@@ -1,7 +1,7 @@
 import time
 import RPi.GPIO as GPIO
 from arena.tiles import *
-
+from RPIO import PWM
 from sensor.led import *
 from sensor.laser import *
 from sensor.l298n.l298n import *
@@ -345,7 +345,7 @@ class Robot():
 				servo.set_servo(self.KitDropperPin, self.FrontPosR)
 
 			time.sleep(self.Time90Deg)
-		servo.cleanup()
+		#servo.cleanup()
 		time.sleep(0.1)
 
 	def IsVictimLeft(self):
