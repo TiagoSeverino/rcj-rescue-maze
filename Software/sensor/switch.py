@@ -16,9 +16,9 @@ class SWITCH():
 
 		for i in range(count):
 			ReadSum += GPIO.input(self.pin)
-			time.sleep(0.001)
+			time.sleep(0.0001)
 
-		if firstRead * 10 == ReadSum:
+		if firstRead * 5 == ReadSum:
 			return True if firstRead == 1 else False
 		else:
 			return self.IsOn()
