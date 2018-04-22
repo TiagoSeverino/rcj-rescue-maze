@@ -8,7 +8,6 @@ from sensor.l298n.l298n import *
 from sensor.cmps10.cmps10 import *
 from sensor.switch import *
 from sensor.tpa81.tpa81 import *
-from sensor.kitDropper import *
 from sensor.lineSensor import *
 
 import pdb
@@ -16,7 +15,7 @@ import pdb
 class Robot():
 
 	#Kit Dropper Pin
-	KitDropperPin = 18
+	KitDropperPin = 24
 
 	#Line Sensor Pin
 	LineSensorPin = 22
@@ -47,6 +46,13 @@ class Robot():
 	MinTempGap = 4.0
 	MinVictimTemp = 27.5
 
+	#Kit Dropper Settings
+	LeftPos = 1750
+	FrontPosL = 1280
+	FrontPosR = 1450
+	RightPos = 1000
+	Time90Deg = 0.75
+
 	ramp = False
 
 	tile = 0
@@ -65,9 +71,6 @@ class Robot():
 
 		#Lasers Setup
 		self.Lasers = Lasers(7, 11, 13, 15, 19)
-
-		#Kit Dropper Setup
-		self.KitDropper = KitDropper(self.KitDropperPin)
 
 		#Line Sensor Setup
 		self.lineSensor = LineSensor(self.LineSensorPin)
@@ -99,14 +102,6 @@ class Robot():
 
 		while True:
 
-			if CheckVictimLeft:
-				if self.IsVictimLeft():
-					CheckVictimLeft = False
-
-			if CheckVictimRight:
-				if self.IsVictimRight():
-					CheckVictimRight = False
-
 			(tile, distance) =  self.GetTile(self.GetLaser(Laser.Front))
 
 			inclination = self.GetPitch()
@@ -119,6 +114,14 @@ class Robot():
 
 				(frontLeftTile, frontLeftDist) = self.GetTile(self.GetLaser(Laser.FrontLeft))
 				(frontRightTile, frontRightDist) = self.GetTile(self.GetLaser(Laser.FrontRight))
+
+				if CheckVictimLeft and frontLeftTile == 0:
+					if self.IsVictimLeft():
+						CheckVictimLeft = False
+
+				if CheckVictimRight and frontRightTile == 0:
+					if self.IsVictimRight():
+						CheckVictimRight = False
 
 				if frontLeftDist > frontRightDist + gap:
 					if self.ramp == False or inclination < 128:
@@ -140,6 +143,14 @@ class Robot():
 
 				(backLeftTile, backLeftDist) = self.GetTile(self.GetLaser(Laser.BackLeft))
 				(backRightTile, backRightDist) = self.GetTile(self.GetLaser(Laser.BackRight))
+
+				if CheckVictimLeft and backLeftTile == 0:
+					if self.IsVictimLeft():
+						CheckVictimLeft = False
+
+				if CheckVictimRight and backRightTile == 0:
+					if self.IsVictimRight():
+						CheckVictimRight = False
 
 				if backLeftDist > backRightDist + gap:
 					self.Backward1(30, 50)
@@ -288,19 +299,32 @@ class Robot():
 		return (wallLeft, wallFront, wallRight)
 
 
-	def DropKit(self, ammount=1):
+	def DropKit(self, position, ammount = 1):
 		self.Break()
 		time.sleep(0.1)
-		self.KitDropper.drop(ammount)
+
+		servo = PWM.Servo()
+
+		for x in range(0, ammount):
+			if position == 0:
+				servo.set_servo(self.KitDropperPin, self.LeftPos)
+				time.sleep(self.Time90Deg)
+				servo.set_servo(self.KitDropperPin, self.FrontPosL)
+
+			elif position == 1:
+				servo.set_servo(self.KitDropperPin, self.RightPos)
+				time.sleep(self.Time90Deg)
+				servo.set_servo(self.KitDropperPin, self.FrontPosR)
+
+			time.sleep(self.Time90Deg)
+		servo.cleanup()
 		time.sleep(0.1)
 
 	def IsVictimLeft(self):
 		(ambLeft, objLeft) = self.GetTemperatureLeft()
 
 		if ((objLeft - ambLeft) > self.MinTempGap) and objLeft > self.MinVictimTemp:
-			self.RotateRight()
-			self.DropKit()
-			self.RotateLeft()
+			self.DropKit(position = 0)
 			print "Victim Detected"
 			return True
 		else:
@@ -310,9 +334,7 @@ class Robot():
 		(ambRight, objRight) = self.GetTemperatureRight()
 
 		if ((objRight - ambRight) > self.MinTempGap) and objRight > self.MinVictimTemp:
-			self.RotateLeft()
-			self.DropKit()
-			self.RotateRight()
+			self.DropKit(position = 1)
 			print "Victim Detected"
 			return True
 		else:
