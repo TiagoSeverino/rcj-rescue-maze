@@ -38,6 +38,7 @@ class MazeRunners():
 
 		#Setup Robot Positining Vars
 		self.robot.BearOffSet = self.robot.compass.bearing255()
+		self.robot.Bear3599OffSet = self.robot.compass.bearing3599()
 		self.robot.PitchOffSet = self.robot.compass.pitch()
 		self.robot.RollOffSet = self.robot.compass.roll()
 

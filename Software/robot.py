@@ -37,6 +37,7 @@ class Robot():
 
 	#Self Calibration
 	BearOffSet = 0
+	Bear3599OffSet = 0
 	PitchOffSet = 0
 	RollOffSet = 0
 
@@ -378,6 +379,18 @@ class Robot():
  			bear -= 255
  		elif bear < 0:
  			bear += 255
+
+  		return bear
+
+	def GetBear3599(self):
+		bear = self.compass.bearing3599()
+
+		bear -= self.Bear3599OffSet
+
+ 		if bear > 360.0:
+ 			bear -= 360.0
+ 		elif bear < 360.0:
+ 			bear += 360.0
 
   		return bear
 
