@@ -6,7 +6,7 @@ class SWITCH():
 	def __init__(self, pin):
 		self.pin = pin
 		
-		GPIO.setup(self.pin, GPIO.IN)
+		GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 	def IsOn(self):
 		firstRead = GPIO.input(self.pin)
