@@ -48,9 +48,9 @@ class Robot():
 
 	#Kit Dropper Settings
 	LeftPos = 1750
-    FrontPosL = 1280
-    FrontPosR = 1450
-    RightPos = 1000
+	FrontPosL = 1280
+	FrontPosR = 1450
+	RightPos = 1000
 	Time90Deg = 0.75
 
 	ramp = False
@@ -299,25 +299,25 @@ class Robot():
 		return (wallLeft, wallFront, wallRight)
 
 
-	def DropKit(self, , position, ammount = 1):
+	def DropKit(self, position, ammount = 1):
 		self.Break()
 		time.sleep(0.1)
 
 		servo = PWM.Servo()
 
-        for x in range(0, ammount):
-            if position == 0:
-                servo.set_servo(self.KitDropperPin, self.LeftPos)
-                time.sleep(self.Time90Deg)
-                servo.set_servo(self.KitDropperPin, self.FrontPosL)
+		for x in range(0, ammount):
+			if position == 0:
+				servo.set_servo(self.KitDropperPin, self.LeftPos)
+				time.sleep(self.Time90Deg)
+				servo.set_servo(self.KitDropperPin, self.FrontPosL)
 
-            elif position == 1:
-                servo.set_servo(self.KitDropperPin, self.RightPos)
-                time.sleep(self.Time90Deg)
-                servo.set_servo(self.KitDropperPin, self.FrontPosR)
+			elif position == 1:
+				servo.set_servo(self.KitDropperPin, self.RightPos)
+				time.sleep(self.Time90Deg)
+				servo.set_servo(self.KitDropperPin, self.FrontPosR)
 
-            time.sleep(self.Time90Deg)
-        servo.cleanup()
+			time.sleep(self.Time90Deg)
+		servo.cleanup()
 		time.sleep(0.1)
 
 	def IsVictimLeft(self):
