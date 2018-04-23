@@ -192,19 +192,35 @@ class Robot():
 
 		return (tile, distance)
 
-	def RotateLeft(self):
+	def RotateLeft(self, CheckVictims = False):
 		self.Left(5)
 		time.sleep(0.55)
 		self.Break()
 
 		self.AlignToWall()
 
-	def RotateRight(self):
+		(wallLeft, wallFront, wallRight) = self.GetWalls()
+
+		if CheckVictims and wallLeft:
+			self.IsVictimLeft()
+
+		if CheckVictims and wallRight:
+			self.IsVictimRight()
+
+	def RotateRight(self, CheckVictims = False):
 		self.Right(5)
 		time.sleep(0.55)
 		self.Break()
 
 		self.AlignToWall()
+
+		(wallLeft, wallFront, wallRight) = self.GetWalls()
+
+		if CheckVictims and wallLeft:
+			self.IsVictimLeft()
+
+		if CheckVictims and wallRight:
+			self.IsVictimRight()
 
 	def AlignToWall(self):
 

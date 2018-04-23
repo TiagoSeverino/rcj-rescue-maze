@@ -43,7 +43,7 @@ class MazeRunners():
 		self.robot.RollOffSet = self.robot.compass.roll()
 
 		self.RegisterTile()
-		self.RotateLeft()
+		self.RotateLeft(checkVictims = True)
 		self.RegisterTile()
 
 	def Start(self):
@@ -373,61 +373,61 @@ class MazeRunners():
 
 		self.robot.ramp = False
 
-	def RotateLeft(self):
-		self.robot.RotateLeft()
+	def RotateLeft(self, checkVictims = False):
+		self.robot.RotateLeft(CheckVictims = checkVictims)
 
 		direction = self.direction
 		self.direction = Direction.rotateLeft(direction)
 
 		print "Rotated Left!"
 
-	def RotateRight(self):
-		self.robot.RotateRight()
+	def RotateRight(self, checkVictims = False):
+		self.robot.RotateRight(CheckVictims = checkVictims)
 
 		direction = self.direction
 		self.direction = Direction.rotateRight(direction)
 
 		print "Rotated Right!"
 
-	def RotateDirectionBottom(self):
+	def RotateDirectionBottom(self, checkVictims = False):
 		if self.direction == Direction.Up:
-			self.RotateLeft()
+			self.RotateLeft(checkVictims = checkVictims)
 
 		if self.direction == Direction.Left:
 			self.RotateLeft()
 
 		if self.direction == Direction.Right:
-			self.RotateRight()
+			self.RotateRight(checkVictims = checkVictims)
 
-	def RotateDirectionRight(self):
+	def RotateDirectionRight(self, checkVictims = False):
 		if self.direction == Direction.Left:
-			self.RotateLeft()
+			self.RotateLeft(checkVictims = checkVictims)
 
 		if self.direction == Direction.Bottom:
 			self.RotateLeft()
 
 		if self.direction == Direction.Up:
-			self.RotateRight()
+			self.RotateRight(checkVictims = checkVictims)
 
-	def RotateDirectionLeft(self):
+	def RotateDirectionLeft(self, checkVictims = False):
 		if self.direction == Direction.Right:
-			self.RotateLeft()
+			self.RotateLeft(checkVictims = checkVictims)
 
 		if self.direction == Direction.Up:
 			self.RotateLeft()
 
 		if self.direction == Direction.Bottom:
-			self.RotateRight()
+			self.RotateRight(checkVictims = checkVictims)
 
-	def RotateDirectionUp(self):
+	def RotateDirectionUp(self, checkVictims = False):
 		if self.direction == Direction.Bottom:
-			self.RotateLeft()
+			self.RotateLeft(checkVictims = checkVictims)
 
 		if self.direction == Direction.Right:
 			self.RotateLeft()
 
 		if self.direction == Direction.Left:
-			self.RotateRight()
+			self.RotateRight(checkVictims = checkVictims)
 
 	"""
 	### Tile Information
