@@ -228,46 +228,46 @@ class MazeRunners():
 		if self.direction == Direction.Bottom:
 
 			if nextVoidWalls.Down == False and nextVoidTiles.Down:
-				self.RotateDirectionBottom()
+				self.RotateDirectionBottom(checkVictims = True)
 			elif nextVoidWalls.Left == False and nextVoidTiles.Left:
-				self.RotateDirectionLeft()
+				self.RotateDirectionLeft(checkVictims = True)
 			elif nextVoidWalls.Right == False and nextVoidTiles.Right:
-				self.RotateDirectionRight()
+				self.RotateDirectionRight(checkVictims = True)
 			elif nextVoidWalls.Up == False and nextVoidTiles.Up:
-				self.RotateDirectionUp()
+				self.RotateDirectionUp(checkVictims = True)
 
 		elif self.direction == Direction.Right:
 
 			if nextVoidWalls.Right == False and nextVoidTiles.Right:
-				self.RotateDirectionRight()
+				self.RotateDirectionRight(checkVictims = True)
 			elif nextVoidWalls.Down == False and nextVoidTiles.Down:
-				self.RotateDirectionBottom()
+				self.RotateDirectionBottom(checkVictims = True)
 			elif nextVoidWalls.Up == False and nextVoidTiles.Up:
-				self.RotateDirectionUp()
+				self.RotateDirectionUp(checkVictims = True)
 			elif nextVoidWalls.Left == False and nextVoidTiles.Left:
-				self.RotateDirectionLeft()
+				self.RotateDirectionLeft(checkVictims = True)
 
 		elif self.direction == Direction.Left:
 
 			if nextVoidWalls.Left == False and nextVoidTiles.Left:
-				self.RotateDirectionLeft()
+				self.RotateDirectionLeft(checkVictims = True)
 			elif nextVoidWalls.Up == False and nextVoidTiles.Up:
-				self.RotateDirectionUp()
+				self.RotateDirectionUp(checkVictims = True)
 			elif nextVoidWalls.Down == False and nextVoidTiles.Down:
-				self.RotateDirectionBottom()
+				self.RotateDirectionBottom(checkVictims = True)
 			elif nextVoidWalls.Right == False and nextVoidTiles.Right:
-				self.RotateDirectionRight()
+				self.RotateDirectionRight(checkVictims = True)
 
 		elif self.direction == Direction.Up:
 
 			if nextVoidWalls.Up == False and nextVoidTiles.Up:
-				self.RotateDirectionUp()
+				self.RotateDirectionUp(checkVictims = True)
 			elif nextVoidWalls.Right == False and nextVoidTiles.Right:
-				self.RotateDirectionRight()
+				self.RotateDirectionRight(checkVictims = True)
 			elif nextVoidWalls.Left == False and nextVoidTiles.Left:
-				self.RotateDirectionLeft()
+				self.RotateDirectionLeft(checkVictims = True)
 			elif nextVoidWalls.Down == False and nextVoidTiles.Down:
-				self.RotateDirectionBottom()
+				self.RotateDirectionBottom(checkVictims = True)
 
 		self.MoveTile(checkVictims = True)
 
