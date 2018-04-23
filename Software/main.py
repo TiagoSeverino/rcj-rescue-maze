@@ -194,7 +194,7 @@ class MazeRunners():
 
 		for floodTile in path:
 			if self.map[floodTile.x, floodTile.y].ramp == False or (self.map[floodTile.x, floodTile.y].ramp == True and self.map[lastTile.x, lastTile.y].ramp == False):
-				self.MoveNextTile(floodTile)
+				self.MoveNextTile(floodTile, checkVictims = True if (floodTile.x == originalLastTile.x and floodTile.y == originalLastTile.y) else False)
 				self.PrintMap()
 
 			lastTile = floodTile
@@ -221,7 +221,7 @@ class MazeRunners():
 
 		return False
 
-	def RotateNextTile(self):
+	def RotateNextTile(self, checkVictims = False):
 		nextVoidWalls = NextVoidTiles(True if self.map[self.x - 1, self.y].rightWall == Wall.Yes else False, True if self.map[self.x, self.y].rightWall == Wall.Yes else False, True if self.map[self.x, self.y - 1].bottomWall == Wall.Yes else False, True if self.map[self.x, self.y].bottomWall == Wall.Yes else False)
 		nextVoidTiles = NextVoidTiles(True if self.map[self.x - 1, self.y].tileType == TileType.Void else False, True if self.map[self.x + 1, self.y].tileType == TileType.Void else False, True if self.map[self.x, self.y - 1].tileType == TileType.Void else False, True if self.map[self.x, self.y + 1].tileType == TileType.Void else False)
 
@@ -271,7 +271,7 @@ class MazeRunners():
 
 		self.MoveTile(checkVictims = True)
 
-	def MoveNextTile(self, lastTile):
+	def MoveNextTile(self, lastTile, checkVictims = False):
 
 		if lastTile.x < self.x:
 
@@ -284,7 +284,7 @@ class MazeRunners():
 			if self.direction == Direction.Bottom:
 				self.RotateRight()
 
-			self.MoveTile()
+			self.MoveTile(checkVictims = checkVictims)
 
 		elif lastTile.x > self.x:
 
@@ -297,7 +297,7 @@ class MazeRunners():
 			if self.direction == Direction.Bottom:
 				self.RotateLeft()
 
-			self.MoveTile()
+			self.MoveTile(checkVictims = checkVictims)
 
 		elif lastTile.y < self.y:
 
@@ -310,7 +310,7 @@ class MazeRunners():
 			if self.direction == Direction.Right:
 				self.RotateLeft()
 
-			self.MoveTile()
+			self.MoveTile(checkVictims = checkVictims)
 
 		elif lastTile.y > self.y:
 
@@ -323,7 +323,7 @@ class MazeRunners():
 			if self.direction == Direction.Right:
 				self.RotateRight()
 
-			self.MoveTile()
+			self.MoveTile(checkVictims = checkVictims)
 
 	"""
 	### Movement
