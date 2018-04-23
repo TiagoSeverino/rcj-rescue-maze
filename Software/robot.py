@@ -168,6 +168,10 @@ class Robot():
 					self.Backward1(50, 30)
 				else:
 					self.Backward(2)
+
+				if self.leftSwitch.IsOn() and self.rightSwitch.IsOn():
+					(finalTile, distance) = self.GetTile(self.GetLaser(Laser.Front))
+					
 			else:
 				self.Break()
 				time.sleep(0.1)
