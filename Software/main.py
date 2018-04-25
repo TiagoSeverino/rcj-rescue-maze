@@ -194,7 +194,7 @@ class MazeRunners():
 
 		for floodTile in path:
 			if self.map[floodTile.x, floodTile.y].ramp == False or (self.map[floodTile.x, floodTile.y].ramp == True and self.map[lastTile.x, lastTile.y].ramp == False):
-				self.MoveNextTile(floodTile, checkVictims = True if (floodTile.x == originalLastTile.x and floodTile.y == originalLastTile.y) else False)
+				self.MoveNextTile(floodTile, checkVictims = True if ((floodTile.x == originalLastTile.x and floodTile.y == originalLastTile.y) or (floodTile.x == self.x and floodTile.y == self.y)) else False)
 				self.PrintMap()
 
 			lastTile = floodTile
