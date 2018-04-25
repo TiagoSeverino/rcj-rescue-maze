@@ -5,8 +5,8 @@ import pdb
 
 class MazeRunners():
 
-	mapWidth = 40
-	mapHeight = 40
+	mapWidth = 60
+	mapHeight = 60
 
 	startX = mapWidth/2
 	startY = mapHeight/2
