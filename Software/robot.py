@@ -527,4 +527,4 @@ class Robot():
 
 
 	def Exit(self):
-		GPIO.cleanup()
+		self.Stop()

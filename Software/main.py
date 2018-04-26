@@ -528,6 +528,7 @@ class MazeRunners():
 
 	def Exit(self):
 		self.robot.Exit()
+		self.map = self.NewMap(self.mapWidth, self.mapHeight)
 
 maze = MazeRunners()
 maze.Start()
