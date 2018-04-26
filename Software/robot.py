@@ -258,11 +258,12 @@ class Robot():
 		i = 0
 
 		while True:
+
+			if i > 15:
+				break
+
 			i += 1
 
-			if i > 60:
-				break
-				
 			if useLeft == useRight:
 				(backLeft, frontLeft, frontRight, backRight) = (self.GetLaser(Laser.BackLeft), self.GetLaser(Laser.FrontLeft), self.GetLaser(Laser.FrontRight), self.GetLaser(Laser.BackRight))
 
