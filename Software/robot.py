@@ -88,6 +88,12 @@ class Robot():
 		self.leftSwitch = SWITCH(self.LeftSwitch)
 		self.rightSwitch = SWITCH(self.RightSwitch)
 
+		servo = PWM.Servo()
+		servo.set_servo(self.KitDropperPin, self.FrontPosL)
+		time.sleep(self.Time90Deg)
+		servo.set_servo(self.KitDropperPin, self.FrontPosR)
+		time.sleep(self.Time90Deg/5)
+
 	"""
 	### Functions
 	"""
