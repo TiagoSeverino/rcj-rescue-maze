@@ -53,8 +53,8 @@ class Robot():
 
 	#Kit Dropper Settings
 	LeftPos = 1750
-	FrontPosL = 1280
-	FrontPosR = 1450
+	FrontPosL = 1250
+	FrontPosR = 1500
 	RightPos = 1000
 	Time90Deg = 0.75
 
