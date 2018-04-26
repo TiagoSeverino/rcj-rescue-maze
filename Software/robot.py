@@ -95,9 +95,6 @@ class Robot():
 	def MoveTile(self, Ammount = 1, CheckVictims = False):
 		(tile, distance) = self.GetTile(self.GetLaser(Laser.Front))
 
-		if distance > 170:
-			distance = 170
-
 		if distance >= (self.TileSize - (self.TileSize / 2.5)):
 			tile += 1
 			distance = 0
