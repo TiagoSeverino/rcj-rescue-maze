@@ -140,22 +140,22 @@ class Robot():
 				if not self.ramp:
 					if self.leftSwitch.IsOn():
 						self.Backward(2)
-						time.sleep(0.3)
+						time.sleep(0.15)
 						self.Left(2)
-						time.sleep(0.3)
+						time.sleep(0.15)
 						self.Backward(2)
-						time.sleep(0.3)
+						time.sleep(0.15)
 						self.Right(2)
-						time.sleep(0.45)
+						time.sleep(0.20)
 					elif self.rightSwitch.IsOn():
 						self.Backward(2)
-						time.sleep(0.3)
+						time.sleep(0.15)
 						self.Right(2)
-						time.sleep(0.3)
+						time.sleep(0.15)
 						self.Backward(2)
-						time.sleep(0.3)
+						time.sleep(0.15)
 						self.Left(2)
-						time.sleep(0.45)
+						time.sleep(0.20)
 
 			elif tile < finalTile or (tile == finalTile and distance < self.FrontDistance - self.FrontGap):
 
