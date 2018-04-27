@@ -101,6 +101,14 @@ class Robot():
 	def MoveTile(self, Ammount = 1, CheckVictims = False):
 		(tile, distance) = self.GetTile(self.GetLaser(Laser.Front))
 
+		if distance + (tile * self.TileSize) > 800:
+			self.RotateRight()
+			self.RotateRight()
+			self.MoveTile(-1)
+			self.RotateRight()
+			self.RotateRight()
+			return
+
 		if distance >= (self.TileSize - (self.TileSize / 2.5)):
 			tile += 1
 			distance = 0
