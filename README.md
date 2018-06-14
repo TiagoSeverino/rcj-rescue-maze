@@ -16,7 +16,7 @@ alt="Robocup Rescue Maze Robot" width="480" height="360" border="10" /></a>
 * 1x LDR
 * 1x Dip Switch
 * 4x MicroSwitch
-* 6x VL6180X
+* 5x VL53L0X
 * 4x MicroMotors L149.4.90
 * 1x Servo Motor
 * 1x Dual Motor Driver 1A TB6612FNG
