@@ -1,0 +1,156 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <MotorController.h>
+
+#include <CMPS12.h>
+#include <VL53L0X.h>
+
+// Addresses
+#define TCAADDR 0x70
+
+enum{
+	TOF_FRONT = 0,
+	TOF_FRONT_RIGHT,
+	TOF_FRONT_LEFT,
+	TOF_BACK_RIGHT,
+	TOF_BACK,
+	TOF_BACK_LEFT,
+	TOF_END
+};
+
+VL53L0X tof[TOF_END];
+uint16_t tof_distance[TOF_END];
+
+
+uint8_t motor_pins[4] = { 17, 5, 16, 4 };
+uint8_t pwm_pins[4] = { 2, 13, 26, 27 };
+
+
+MotorController Motors(motor_pins, pwm_pins);
+
+CMPS12 cmps12;
+
+void tcaselect(uint8_t i) {
+	if (i > 7) return;
+
+	Wire.beginTransmission(TCAADDR);
+	Wire.write(1 << i);
+	Wire.endTransmission();  
+}
+
+void GetTOF(){
+	for(int i = 0; i < TOF_END; i++){
+		tcaselect(i);
+		tof_distance[i] = tof[i].readRangeContinuousMillimeters();
+
+		Serial.print("Distance [");
+		Serial.print(i);
+		Serial.print("]: ");
+		Serial.print(tof_distance[i]);
+		Serial.println("mm");
+	}
+}
+
+void RotateDeg(float deg){
+	deg = fmod(deg, 360.0);
+
+	float FinalAngle = 180.0f;
+	float Margin = 0.5f;
+
+	float Offset = deg - cmps12.GetBearing3599();
+
+	while(1){
+		float CurrentAngle = cmps12.GetBearing3599() + Offset;
+
+		if (CurrentAngle < 0)
+			CurrentAngle += 360.0f;
+
+		CurrentAngle = fmod(CurrentAngle, 360.0);
+
+		if (CurrentAngle < FinalAngle - Margin)
+			Motors.Right(150);
+		else if (CurrentAngle > FinalAngle + Margin){
+			Motors.Left(150);
+		}else{
+			break;
+		}
+	}
+}
+
+void MoteTile(){
+	while(1){
+		GetTOF();
+		if (tof_distance[TOF_FRONT] < 50){
+			Motors.Backward(50); 
+		}
+		else if (tof_distance[TOF_FRONT] > 300){
+			uint32_t base_speed = 255;
+
+			float GAP = 2;
+
+			float LEFT = fmod(tof_distance[TOF_FRONT_LEFT], 300);
+			float RIGHT = fmod(tof_distance[TOF_FRONT_RIGHT], 300);
+
+			if (LEFT > RIGHT + GAP)
+				Motors.Forward(base_speed - 70, base_speed);
+			else if (RIGHT > LEFT + GAP)
+				Motors.Forward(base_speed, base_speed - 70);
+			else
+				Motors.Forward(base_speed, base_speed);
+		}
+		else if (tof_distance[TOF_FRONT] > 65){
+			uint32_t base_speed = 50.f + ( (tof_distance[0] - 65.f) / (300.f - 65.f) * (255.f - 50.f));
+
+			float GAP = 2;
+
+			float LEFT = fmod(tof_distance[TOF_FRONT_LEFT], 300);
+			float RIGHT = fmod(tof_distance[TOF_FRONT_RIGHT], 300);
+
+			if (LEFT > RIGHT + GAP)
+				Motors.Forward(base_speed - 20, base_speed);
+			else if (RIGHT > LEFT + GAP)
+				Motors.Forward(base_speed, base_speed - 20);
+			else
+				Motors.Forward(base_speed, base_speed);
+		}else{
+			Motors.Break(255);
+			break;
+		}
+	}
+}
+
+void setup() {
+	Serial.begin(115200);
+	Wire.begin(SDA, SCL);
+
+	delay(1000);
+
+	Serial.println("Started");
+
+	for(int i = 0; i < TOF_END; i++){
+		tcaselect(i);
+
+		tof[i].init();
+		tof[i].setTimeout(25);
+
+		// lower the return signal rate limit (default is 0.25 MCPS)
+		tof[i].setSignalRateLimit(0.175);
+		// increase laser pulse periods (defaults are 14 and 10 PCLKs)
+		tof[i].setVcselPulsePeriod(VL53L0X::VcselPeriodPreRange, 16);
+		tof[i].setVcselPulsePeriod(VL53L0X::VcselPeriodFinalRange, 12);
+
+		tof[i].setMeasurementTimingBudget(20000);
+
+		tof[i].startContinuous();
+	}
+
+	Serial.println("TOF Started");
+}
+
+void loop() {
+	MoteTile();
+	delay(1000);
+	RotateDeg(-90);
+	Motors.Break();
+	delay(1000);
+}
