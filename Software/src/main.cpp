@@ -9,6 +9,7 @@
 #define TCAADDR 0x70
 
 #define TILE_SIZE 300
+#define ALIGN_GAP 5
 
 enum{
 	TOF_FRONT = 0,
@@ -43,12 +44,6 @@ void GetTOF(){
 	for(int i = 0; i < TOF_END; i++){
 		tcaselect(i);
 		tof_distance[i] = tof[i].readRangeContinuousMillimeters();
-
-		Serial.print("Distance [");
-		Serial.print(i);
-		Serial.print("]: ");
-		Serial.print(tof_distance[i]);
-		Serial.println("mm");
 	}
 }
 
@@ -61,6 +56,110 @@ uint32_t GetTile(uint16_t distance){
 		}
 
 		return ((distance << 16) + tile);
+}
+
+void AlignToWall(){
+
+	uint32_t speed = 80;
+	bool useLeft = false;
+	bool useRight = false;
+
+	GetTOF();
+
+	uint32_t backLeft = GetTile(tof_distance[TOF_BACK_LEFT]);
+	uint16_t backLeftTile = backLeft & 0xFFFF;
+    uint16_t backLeftDist = backLeft >> 16;
+
+	uint32_t frontLeft = GetTile(tof_distance[TOF_FRONT_LEFT]);
+	uint16_t frontLeftTile = frontLeft & 0xFFFF;
+    uint16_t frontLeftDist = frontLeft >> 16;
+
+	uint32_t backRight = GetTile(tof_distance[TOF_BACK_RIGHT]);
+	uint16_t backRightTile = backRight & 0xFFFF;
+    uint16_t backRightDist = backRight >> 16;
+
+	uint32_t frontRight = GetTile(tof_distance[TOF_FRONT_RIGHT]);
+	uint16_t frontRightTile = frontRight & 0xFFFF;
+    uint16_t frontRightDist = frontRight >> 16;
+
+	if (frontLeftTile == backLeftTile)
+		useLeft = true;
+
+	if (frontRightTile == backRightTile)
+		useRight = true;
+
+	if (useLeft && useRight)
+		if (backLeftTile > backRightTile)
+			useLeft = false;
+		else if (backLeftTile < backRightTile)
+			useRight = false;
+
+	if (useLeft == false && useRight == false)
+		useLeft = true;
+
+	int i = 0;
+
+	while(1){
+
+		if (i > 60)
+			break;
+
+		++i;
+
+		GetTOF();
+
+		backLeft = GetTile(tof_distance[TOF_BACK_LEFT]);
+		backLeftTile = backLeft & 0xFFFF;
+		backLeftDist = backLeft >> 16;
+
+		frontLeft = GetTile(tof_distance[TOF_FRONT_LEFT]);
+		frontLeftTile = frontLeft & 0xFFFF;
+		frontLeftDist = frontLeft >> 16;
+
+		backRight = GetTile(tof_distance[TOF_BACK_RIGHT]);
+		backRightTile = backRight & 0xFFFF;
+		backRightDist = backRight >> 16;
+
+		frontRight = GetTile(tof_distance[TOF_FRONT_RIGHT]);
+		frontRightTile = frontRight & 0xFFFF;
+		frontRightDist = frontRight >> 16;
+
+		float gap = ALIGN_GAP;
+
+		if (useLeft){
+			gap = ALIGN_GAP * (frontLeftTile * 1.25 + 1);
+			if (backLeftDist > frontLeftDist - gap && backLeftDist < frontLeftDist + gap)
+				break;
+		}
+
+		if (useRight){
+			gap = ALIGN_GAP * (frontRightTile * 1.25 + 1);
+			if (backRightDist > frontRightDist - gap && backRightDist < frontRightDist + gap)
+				break;
+		}
+
+		if (useLeft == useRight)
+			if (backLeftDist > frontLeftDist + gap && backRightDist < frontRightDist - gap)
+				Motors.Right(speed);
+			else if (backLeftDist < frontLeftDist - gap && backRightDist > frontRightDist + gap)
+				Motors.Left(speed);
+			else if (backLeftDist > frontLeftDist + gap && backRightDist > frontRightDist + gap)
+				Motors.Forward(speed);
+			else
+				Motors.Backward(speed);
+		else if (useLeft)
+			if (backLeftDist > frontLeftDist + gap)
+				Motors.Right(speed);
+			else // backLeftDist < frontLeftDist - gap:
+				Motors.Right(speed);
+		else
+			if (backRightDist < frontRightDist - gap)
+				Motors.Right(speed);
+			else // backRightDist > frontRightDist + gap:
+				Motors.Left(speed);
+	}
+	Motors.Break();
+	delay(100);
 }
 
 void RotateDeg(float deg){
@@ -92,22 +191,23 @@ void RotateDeg(float deg){
 	}
 }
 
-void MoteTile(int Ammount){
+void MoteTile(int Ammount = 1){
 	uint8_t laser;
 
 	GetTOF();
 
-	if (tof_distance[TOF_FRONT] == 0xFFFF){
+	if (tof_distance[TOF_FRONT] == 0xFFFF)
+	{
 		laser = TOF_BACK;
 	}
-	else if (tof_distance[TOF_FRONT] > tof_distance[TOF_BACK]){
+	else if (tof_distance[TOF_FRONT] > tof_distance[TOF_BACK])
+	{
 		laser = TOF_BACK;
 	}
 	else
 	{
 		laser = TOF_FRONT;
 	}
-	
 
 	uint32_t tiles = GetTile(tof_distance[laser]);
 
@@ -115,7 +215,8 @@ void MoteTile(int Ammount){
 
 	int final_tile = tile;
 
-	if (laser == TOF_FRONT){
+	if (laser == TOF_FRONT)
+	{
 		final_tile -= Ammount;
 	}
 	else
@@ -131,22 +232,42 @@ void MoteTile(int Ammount){
 
 		tiles = GetTile(tof_distance[laser]);
 		tile = tiles & 0xFFFF;
-    	uint32_t distance = tiles >> 16;
+    	uint16_t distance = tiles >> 16;
 
-		if (laser == TOF_BACK){
-			distance = TILE_SIZE - distance;
-		}
 
-		if ( (tile == final_tile && distance < 50) || ((tile < final_tile && laser == TOF_FRONT) || (tile > final_tile && laser == TOF_BACK)) ) {
-			Motors.Backward(50); 
+		Serial.print("Distance: ");
+		Serial.println(distance);
+		
+		Serial.print("Tiles: ");
+		Serial.println(tile);
+
+		if ( (tile <= final_tile && distance < 45 && laser == TOF_FRONT) || (tile >= final_tile && distance > 55 && laser == TOF_BACK) ) {
+			Motors.Backward(50);
+
+			Serial.print("Backward");			
 		}
 		else if ( ((tile > final_tile && laser == TOF_FRONT) || (tile < final_tile && laser == TOF_BACK)) ){
 			uint32_t base_speed = 255;
 
+			Serial.println("Forward");
+
 			Motors.Forward(base_speed, base_speed);
 		}
-		else if (tile == final_tile && distance > 65){
-			uint32_t base_speed = 50.f + ( (distance - 65.f) / (300.f - 65.f) * (255.f - 50.f));
+		else if (tile == final_tile && ((distance > 55 && laser == TOF_FRONT) || (distance < 45 && laser == TOF_BACK)) ){
+			uint32_t base_speed;
+
+			if (laser == TOF_FRONT)
+			{
+				base_speed = 50.f + ( (distance - 55.f) / (300.f - 55.f) * (255.f - 50.f));
+			}
+			else
+			{
+				base_speed = 50.f + ( (45.f - distance) / 300.f * (255.f - 50.f));
+			}
+
+			Serial.print("Forward ");
+			Serial.print("Base_Speed: ");
+			Serial.println(base_speed);
 
 			Motors.Forward(base_speed, base_speed);
 		}else{
@@ -186,8 +307,8 @@ void setup() {
 
 void loop() {
 	MoteTile(1);
-	delay(1000);
-	RotateDeg(-90);
-	Motors.Break();
-	delay(1000);
+	AlignToWall();
+	//RotateDeg(-90
+	//Motors.Break();
+	//delay(1000);
 }
