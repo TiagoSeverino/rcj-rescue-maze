@@ -17,8 +17,8 @@ MotorController::MotorController(uint8_t motor_pins[4], uint8_t pwm_pins[4])
 		digitalWrite(this->motor_pins[i], LOW);
 		digitalWrite(this->pwm_pins[i], LOW);
 
-		ledcSetup(i, freq, resolution);
-		ledcAttachPin(this->pwm_pins[i], i);
+		ledcSetup(i + 2, freq, resolution);
+		ledcAttachPin(this->pwm_pins[i], i + 2);
 	}
 
 	SetPwmValues(new uint32_t[4]  { 255, 255, 255, 255 } );
@@ -35,7 +35,7 @@ void MotorController::Forward()
 	for(size_t i = 0; i < 4; i++)
 	{
 		digitalWrite(this->motor_pins[i], i % 2);
-		ledcWrite(i, this->pwm_values[i]);
+		ledcWrite(i + 2, this->pwm_values[i]);
 	}
 }
 
@@ -62,7 +62,7 @@ void MotorController::Backward()
 	for(size_t i = 0; i < 4; i++)
 	{
 		digitalWrite(this->motor_pins[i], !(i % 2));
-		ledcWrite(i, this->pwm_values[i]);
+		ledcWrite(i + 2, this->pwm_values[i]);
 	}
 }
 
@@ -89,7 +89,7 @@ void MotorController::Left()
 	for(size_t i = 0; i < 4; i++)
 	{
 		digitalWrite(this->motor_pins[i], (i < 2) ? !(i % 2) : (i % 2));
-		ledcWrite(i, this->pwm_values[i]);
+		ledcWrite(i + 2, this->pwm_values[i]);
 	}
 }
 
@@ -116,7 +116,7 @@ void MotorController::Right()
 	for(size_t i = 0; i < 4; i++)
 	{
 		digitalWrite(this->motor_pins[i], (i < 2) ? (i % 2) : !(i % 2));
-		ledcWrite(i, this->pwm_values[i]);
+		ledcWrite(i + 2, this->pwm_values[i]);
 	}
 }
 
@@ -143,7 +143,7 @@ void MotorController::Break()
 	for(size_t i = 0; i < 4; i++)
 	{
 		digitalWrite(this->motor_pins[i], HIGH);
-		ledcWrite(i, this->pwm_values[i]);
+		ledcWrite(i + 2, this->pwm_values[i]);
 	}
 }
 
@@ -170,6 +170,6 @@ void MotorController::Stop()
 	for(size_t i = 0; i < 4; i++)
 	{
 		digitalWrite(this->motor_pins[i], LOW);
-		ledcWrite(i, this->pwm_values[i]);
+		ledcWrite(i + 2, this->pwm_values[i]);
 	}
 }
